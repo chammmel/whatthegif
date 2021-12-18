@@ -1,103 +1,50 @@
 <script context="module" lang="ts">
-export const prerender = true;
+  export const prerender = true;
 </script>
 
 <script lang="ts">
-import Counter from '$lib/Counter.svelte';
-import { SearchRequest } from '$lib/protocol/communication';
+  import AnimatedLogo from '$lib/header/AnimatedLogo.svelte';
+  import JoinInput from '$lib/input/JoinInput.svelte';
+  import Button from '$lib/input/Button.svelte';
 import { onMount } from 'svelte';
+import { connectToServer } from '$lib/service/data.service';
 
-const asd: SearchRequest =  {
-query: 'login',
-       pageNumber: 1,
-       resultPerPage: 50
-}
-
-onMount(async () => {
-    const send = SearchRequest.encode(asd).finish();
-    console.log(send);
-
-    /*console.log(SearchRequest.decode(send));*/
-    const socket = new WebSocket("ws://localhost:8080/start-websocket/asd");
-
-    socket.addEventListener('open', (event) => {
-        console.log(event);
-
-        })
-    socket.addEventListener('message', (event) => {
-
-        const reader = new FileReader();
-
-        reader.addEventListener("loadend", function() {
-            const view = new Uint8Array(reader.result as ArrayBuffer);
-            console.log(SearchRequest.decode(view));
-            });
-
-        reader.readAsArrayBuffer(event.data);
-
-        })
-
-})
-
-
-/*socket.onopen((asd: Event) => {*/
-
-/*})*/
-/*socket.onmessage((es: WebSocket, ev: MessageEvent<Uint8Array>) => {*/
-/*console.log(event)*/
-/*console.log(SearchRequest.decode(event));*/
-/*})*/
-
+  onMount(async () => {
+    connectToServer('room123', 'user');
+  });
 </script>
 
 <svelte:head>
-<title>Home</title>
+  <title>WhatTheGif - FUNNY MONKEY</title>
 </svelte:head>
 
 <section>
-<h1>
-<div class="welcome">
-<picture>
-<source srcset="svelte-welcome.webp" type="image/webp" />
-<img src="svelte-welcome.png" alt="Welcome" />
-</picture>
-</div>
-
-to your new<br />SvelteKit app
-</h1>
-
-<h2>
-try editing <strong>src/routes/index.svelte</strong>
-</h2>
-
-<Counter />
+  <div class="logo">
+    <AnimatedLogo />
+  </div>
+  <JoinInput width={'100%'} />
+  <span>OR</span>
+  <Button width={'100%'} background="var(--green-color)">Create a lobby</Button>
 </section>
 
 <style>
-section {
-display: flex;
-         flex-direction: column;
-         justify-content: center;
-         align-items: center;
-flex: 1;
-}
-
-h1 {
-width: 100%;
-}
-
-.welcome {
-position: relative;
-width: 100%;
-height: 0;
-padding: 0 0 calc(100% * 495 / 2048) 0;
-}
-
-.welcome img {
-position: absolute;
-width: 100%;
-height: 100%;
-top: 0;
-display: block;
-}
+  .logo {
+    margin-bottom: 50px;
+  }
+  section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    margin: 0 auto;
+  }
+  span {
+    font-size: 25px;
+    font-weight: bold;
+    color: white;
+    margin: 20px 0;
+    letter-spacing: var(--letter-space);
+    filter: var(--drop-shadow);
+  }
 </style>

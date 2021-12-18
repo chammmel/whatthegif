@@ -1,8 +1,52 @@
 syntax = "proto3";
 
-message SearchRequest {
-  string query = 1;
-  int32 page_number = 2;
-  int32 result_per_page = 3;
+import "google/protobuf/any.proto";
+
+option java_multiple_files = true;
+option java_package = "com.github.chammmel.generated";
+option java_outer_classname = "CommunicationDTOS";
+
+message PreJoinRequest {
+  string room = 1;
 }
 
+message PreJoinResponse {
+  JoinError error = 1;
+}
+
+message JoinRequest {
+  string room = 1;
+  string username = 2;
+  optional string password = 3;
+}
+
+message JoinResponse {
+  optional JoinError error = 1;
+  repeated User user = 2;
+  optional Content content = 3;
+}
+
+message User {
+  string uuid = 1;
+  string name = 2;
+}
+
+enum JoinError {
+  REQUIRES_PASSWORD = 0;
+  WRONG_PASSWORD = 1;
+  UNALLOWED_USERNAME = 2;
+  ROOM_FULL = 3;
+}
+
+message Content {
+  string uuid = 1;
+  string url = 10;
+}
+
+message Vote {
+  string contentId = 1;
+}
+
+message Message {
+  google.protobuf.Any payload = 1;
+}

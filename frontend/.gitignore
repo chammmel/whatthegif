@@ -9,3 +9,4 @@ node_modules
 .vercel
 .output
 pnpm-lock.yaml
+src/lib/generated
