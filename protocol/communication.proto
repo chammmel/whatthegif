@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/protobuf/any.proto";
 
 option java_multiple_files = true;
-option java_package = "com.github.chammmel.generated";
+option java_package = "com.github.chammmel.backend.generated";
 option java_outer_classname = "CommunicationDTOS";
 
 message PreJoinRequest {
@@ -32,10 +32,11 @@ message User {
 }
 
 enum JoinError {
-  REQUIRES_PASSWORD = 0;
-  WRONG_PASSWORD = 1;
-  UNALLOWED_USERNAME = 2;
-  ROOM_FULL = 3;
+  FINE = 0;
+  REQUIRES_PASSWORD = 1;
+  WRONG_PASSWORD = 2;
+  UNALLOWED_USERNAME = 3;
+  ROOM_FULL = 4;
 }
 
 message Content {

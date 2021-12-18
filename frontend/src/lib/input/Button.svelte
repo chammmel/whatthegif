@@ -27,4 +27,9 @@
     transition: filter 0.25s;
     filter: brightness(var(--hover-brightness));
   }
+  button:active {
+    transition: 0.2s;
+    transform: scale(0.96);
+    opacity: 1;
+  }
 </style>

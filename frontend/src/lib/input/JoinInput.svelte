@@ -1,11 +1,23 @@
 <script lang="ts">
+  import { connectToServer, disconnectFromServer } from '$lib/service/data.service';
+
   export let width: string = '389px';
   export let height: string = '56px';
+
+  let room = '';
+
+  function join() {
+    disconnectFromServer();
+    if (room !== '') {
+      connectToServer(room);
+    }
+    room = '';
+  }
 </script>
 
 <div style="width: {width}; height: {height};" class="join-input">
-  <input type="text" placeholder="Invite code" />
-  <span id="label">Join</span>
+  <input bind:value={room} type="text" placeholder="Invite code" />
+  <span on:click={join} id="label">Join</span>
 </div>
 
 <style>
@@ -33,6 +45,10 @@
   }
 
   #label {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -48,10 +64,16 @@
     background-color: var(--purple-color);
     font-size: var(--text-size);
     letter-spacing: var(--letter-space);
+    transition: box-shadow 1s;
   }
 
   #label:hover {
     transition: filter 0.25s;
     filter: brightness(var(--hover-brightness));
+  }
+
+  #label:active {
+    transition: box-shadow 0.1s;
+    box-shadow: 2px 3px 9px 0px var(--purple-color);
   }
 </style>

@@ -6,16 +6,11 @@
   import AnimatedLogo from '$lib/header/AnimatedLogo.svelte';
   import JoinInput from '$lib/input/JoinInput.svelte';
   import Button from '$lib/input/Button.svelte';
-import { onMount } from 'svelte';
-import { connectToServer } from '$lib/service/data.service';
-
-  onMount(async () => {
-    connectToServer('room123', 'user');
-  });
+  import Footer from '$lib/footer/Footer.svelte';
 </script>
 
 <svelte:head>
-  <title>WhatTheGif - FUNNY MONKEY</title>
+  <title>WhatTheGif</title>
 </svelte:head>
 
 <section>
@@ -26,6 +21,7 @@ import { connectToServer } from '$lib/service/data.service';
   <span>OR</span>
   <Button width={'100%'} background="var(--green-color)">Create a lobby</Button>
 </section>
+<Footer />
 
 <style>
   .logo {

@@ -38,4 +38,4 @@ nb-configuration.xml
 # Local environment
 .env
 
-src/main/java/com/github/chammmel/generated
+src/main/java/com/github/chammmel/backend/generated/*.java

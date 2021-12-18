@@ -1,4 +1,4 @@
-package com.github.chammmel;
+package com.github.chammmel.backend;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
