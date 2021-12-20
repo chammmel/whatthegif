@@ -3,25 +3,10 @@
   import { fade, blur, scale } from 'svelte/transition';
 
   let show = false;
-  let duration = 3000;
 
   onMount(() => {
     show = true;
   });
-
-  function doHover(node, { duration }) {
-    let move = 0;
-    return {
-      duration,
-      css: (timer) => {
-        if (timer >= 0.5) {
-          return `transform: translateY(${move--}px);`;
-        } else {
-          return `transform: translateY(${move++}px);`;
-        }
-      }
-    };
-  }
 </script>
 
 <div class="animated-logo">
@@ -74,7 +59,7 @@
 
 <style>
   #ani-logo {
-    animation: hover 3s infinite linear;
+    animation: hover 1.5s alternate infinite ease-in-out;
   }
   .ratio {
     display: block;
@@ -86,20 +71,8 @@
   }
 
   @keyframes hover {
-    0% {
-      transform: translateY(6px);
-      animation-timing-function: ease-out;
-    }
-
-    50% {
-      transform: translateY(-6px);
-      animation-timing-function: ease-out;
-
-    }
-
-    100% {
-      transform: translateY(7px);
-      animation-timing-function: ease-in;
+    to {
+      transform: translatey(8px);
     }
   }
 
