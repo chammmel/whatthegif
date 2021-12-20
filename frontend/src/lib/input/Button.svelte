@@ -3,9 +3,21 @@
   export let color: string = 'white';
   export let width: string = '389px';
   export let height: string = '56px';
+  export let href: string = undefined;
+
+  function handleClick() {
+    if (!href) {
+      return;
+    }
+    history.pushState(href, '', href);
+    window.location.href = href;
+  }
 </script>
 
-<button style="background: {background}; color: {color}; width: {width}; height: {height};">
+<button
+  on:click={handleClick}
+  style="background: {background}; color: {color}; width: {width}; height: {height};"
+>
   <slot />
 </button>
 
