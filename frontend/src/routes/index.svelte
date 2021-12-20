@@ -19,7 +19,7 @@
   </div>
   <JoinInput width={'100%'} />
   <span>OR</span>
-  <Button width={'100%'} background="var(--green-color)">Create a lobby</Button>
+  <Button href="/create" width={'100%'} background="var(--green-color)">Create a lobby</Button>
 </section>
 <Footer />
 
