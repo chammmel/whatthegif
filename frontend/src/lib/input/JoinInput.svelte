@@ -1,15 +1,22 @@
 <script lang="ts">
-  import { connectToServer, disconnectFromServer } from '$lib/service/data.service';
+  import { DataService } from '$lib/service/data.service';
+  import { onMount } from 'svelte';
 
   export let width: string = '389px';
   export let height: string = '56px';
 
   let room = '';
+  let dataservice;
+
+  onMount(async () => {
+    dataservice = new DataService();
+    dataservice.connectToServer();
+  });
 
   function join() {
-    disconnectFromServer();
+    /*dataservice.disconnectFromServer();*/
     if (room !== '') {
-      connectToServer(room);
+      dataservice.preJoinRequest(room);
     }
     room = '';
   }

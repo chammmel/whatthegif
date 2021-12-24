@@ -11,7 +11,6 @@
   <slot />
 </main>
 
-
 <style>
   main {
     flex: 1;

@@ -14,7 +14,7 @@
 </PopUp>
 
 <style>
-    span {
-        height: 15px;
-    }
+  span {
+    height: 15px;
+  }
 </style>

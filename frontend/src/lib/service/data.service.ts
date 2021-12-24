@@ -2,71 +2,100 @@ import {
   Content,
   JoinResponse,
   Message,
+  PreJoinRequest,
   PreJoinResponse
 } from '$lib/generated/protocol/communication';
 
-let socket: WebSocket;
+export class DataService {
+  private socket: WebSocket = undefined;
+  private clientId = Date.now();
 
-export const disconnectFromServer = () => {
-  if (socket) {
-    socket.close();
-  }
-};
+  public disconnectFromServer = () => {
+    if (this.socket) {
+      this.socket.close();
+    }
+  };
 
-export const connectToServer = (room: string) => {
-  socket = new WebSocket('ws://localhost:8080/start-websocket/' + room);
+  public connectToServer = () => {
+    if (!this.socket) {
+      this.socket = new WebSocket('ws://localhost:8080/websocket/' + this.clientId);
+      console.log('Connected to websocket');
 
-  socket.addEventListener('open', (event) => {
-    console.log(event);
-  });
-  socket.addEventListener('message', async (event) => {
-    const buffer = await toUint8Array(event.data);
+      this.socket.addEventListener('open', (event) => {
+        console.log(event);
+      });
+      this.socket.addEventListener('message', async (event) => {
+        const buffer = await this.toUint8Array(event.data);
 
-    const message = Message.decode(buffer);
-    const content = dataParser(message);
+        const message = Message.decode(buffer);
+        console.log('Got message', message);
+        const content = await this.dataParser(message);
 
-    console.log(content as PreJoinResponse);
-  });
-};
+        console.log(content);
+      });
+    }
+  };
 
-const toUint8Array = async (data: Blob): Promise<Uint8Array> =>
-  new Promise((resolve) => {
-    const reader = new FileReader();
+  public preJoinRequest = (room: string) => {
+    const data = PreJoinRequest.encode(
+      PreJoinRequest.fromJSON({
+        room
+      })
+    ).finish();
 
-    reader.addEventListener('loadend', function () {
-      const view = new Uint8Array(reader.result as ArrayBuffer);
+    this.sendMessage('PreJoinRequest', data);
+  };
 
-      resolve(view);
+  private toUint8Array = async (data: Blob): Promise<Uint8Array> =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+
+      reader.addEventListener('loadend', function () {
+        const view = new Uint8Array(reader.result as ArrayBuffer);
+
+        resolve(view);
+      });
+
+      reader.readAsArrayBuffer(data);
     });
 
-    reader.readAsArrayBuffer(data);
-  });
+  private dataParser = (message: Message): Promise<PreJoinResponse | JoinResponse | Content> =>
+    new Promise((resolve, reject) => {
+      console.log({ message });
+      const buffer = message.payload.value;
+      switch (message.payload.typeUrl) {
+        case 'PreJoinResponse':
+          resolve(PreJoinResponse.decode(buffer));
+          break;
+        case 'JoinResponse':
+          resolve(JoinResponse.decode(buffer));
+          break;
+        case 'Content':
+          resolve(Content.decode(buffer));
+          break;
 
-const dataParser = (message: Message): PreJoinResponse | JoinResponse | Content => {
-  const buffer = message.payload.value;
-  switch (message.payload.typeUrl) {
-    case 'PreJoinResponse':
-      return PreJoinResponse.decode(buffer);
-    case 'JoinResponse':
-      return JoinResponse.decode(buffer);
-    case 'Content':
-      return Content.decode(buffer);
+        default:
+          reject('Unknown Type: ' + message.payload.typeUrl);
+          break;
+      }
+    });
 
-    default:
-      break;
-  }
-};
+  private sendMessage = (typeUrl: string, value: Uint8Array) => {
+    console.log(typeUrl, value);
 
-//socket.addEventListener('open', (event) => {
-//console.log(event);
-//});
-//socket.addEventListener('message', (event) => {
-//const reader = new FileReader();
+    const bits = Message.encode(
+      Message.fromPartial({
+        payload: {
+          typeUrl,
+          value
+        }
+      })
+    ).finish();
 
-//reader.addEventListener('loadend', function () {
-//const view = new Uint8Array(reader.result as ArrayBuffer);
-//console.log(SearchRequest.decode(view));
-//});
-
-//reader.readAsArrayBuffer(event.data);
-//});
+    if (this.socket === undefined) {
+      console.error('Unable to send data throw websocket');
+    } else {
+      this.socket.send(bits);
+    }
+  };
+}
