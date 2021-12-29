@@ -85,6 +85,7 @@ export class DataService {
 
     const bits = Message.encode(
       Message.fromPartial({
+        origin: 'client',
         payload: {
           typeUrl,
           value

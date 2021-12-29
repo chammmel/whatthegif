@@ -1,34 +1,29 @@
+use std::{sync::{mpsc::channel, Mutex, Arc}, collections::HashMap};
+
+use clap::Parser;
+use configuration::Args;
+use data_converter::DataResult;
+use data_store::Store;
+
+mod configuration;
 mod data_converter;
+mod data_store;
 mod generated;
+mod pubsub;
+mod router;
 
-use std::{net::TcpListener, thread::spawn};
-
-use tungstenite::{
-    accept_hdr,
-    handshake::server::{Request, Response},
-};
-
-/// A WebSocket echo server
 fn main() {
-    let server = TcpListener::bind("127.0.0.1:8080").unwrap();
-    for stream in server.incoming() {
-        spawn(move || {
-            let callback = |req: &Request, response: Response| {
-                println!("The request's path is: {}", req.uri().path());
-                Ok(response)
-            };
-            let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
+    let args = Args::parse();
 
-            loop {
-                let msg = websocket.read_message().unwrap();
+    let data_store = Store {
+      rooms: HashMap::new()
+    };
+    let data_store = Mutex::new(data_store);
+    let data_store = Arc::new(data_store);
 
-                if msg.is_binary() {
-                    let message = data_converter::get_message(msg.into_data());
-                    println!("{:?}", message);
+    let (internal_tx, internal_rx): _ = channel::<DataResult>();
+    let (external_tx, external_rx): _ = channel::<DataResult>();
 
-                    data_converter::data_parser(message);
-                }
-            }
-        });
-    }
+    pubsub::initialize(&args, &data_store);
+    router::start(&args, &data_store);
 }

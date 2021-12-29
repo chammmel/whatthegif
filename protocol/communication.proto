@@ -2,10 +2,6 @@ syntax = "proto2";
 
 import "google/protobuf/any.proto";
 
-option java_multiple_files = true;
-option java_package = "com.github.chammmel.backend.generated";
-option java_outer_classname = "CommunicationDTOS";
-
 message PreJoinRequest {
   required string room = 1;
 }
@@ -32,11 +28,12 @@ message User {
 }
 
 enum JoinError {
-  FINE = 0;
-  REQUIRES_PASSWORD = 1;
-  WRONG_PASSWORD = 2;
-  UNALLOWED_USERNAME = 3;
-  ROOM_FULL = 4;
+  NOT_FOUND = 0;
+  FINE = 1;
+  REQUIRES_PASSWORD = 2;
+  WRONG_PASSWORD = 3;
+  UNALLOWED_USERNAME = 4;
+  ROOM_FULL = 5;
 }
 
 message Content {
@@ -49,5 +46,6 @@ message Vote {
 }
 
 message Message {
-  required google.protobuf.Any payload = 1;
+  required string origin = 1;
+  required google.protobuf.Any payload = 2;
 }
