@@ -6,6 +6,7 @@
   import AnimatedLogo from '$lib/header/AnimatedLogo.svelte';
   import Input from '$lib/input/Input.svelte';
   import Button from '$lib/input/Button.svelte';
+  import Logo from '$lib/header/Logo.svelte';
 </script>
 
 <svelte:head>
@@ -13,6 +14,9 @@
 </svelte:head>
 
 <section>
+  <div class="logo">
+    <Logo />
+  </div>
   <h1>Create a Lobby</h1>
   <div class="grid">
     <Input label="Max players" type="number" min={2} value={8} border="roundy" width="100%" />
@@ -35,17 +39,17 @@
     color: var(--primary-color);
   }
   .logo {
-    margin-bottom: 50px;
+    margin: 50px 0;
   }
   section {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
     flex: 1;
     margin: 0 auto;
     width: 100%;
     max-width: 450px;
+    padding-bottom: 100px;
   }
   .grid {
     display: grid;
