@@ -12,11 +12,18 @@ impl Store {
 
 #[derive(Debug)]
 pub struct Room {
-  name: String,
-  size: u8,
-  max_size: u8,
-  password: Option<String>,
-  users: Vec<User>
+  pub status: RoomState,
+  pub size: i32,
+  pub max_size: i32,
+  pub rounds: i32,
+  pub password: Option<String>,
+  pub users: Vec<User>
+}
+
+#[derive(Debug)]
+pub enum RoomState {
+  LOBBY,
+  RUNNING,
 }
 
 impl Room {
@@ -25,8 +32,8 @@ impl Room {
   }
 
   pub fn is_full(&self) -> bool {
-    if self.max_size == u8::MAX {
-      false
+    if self.size == i32::MAX {
+      true
     } else if self.size >= self.max_size {
       false
     } else {

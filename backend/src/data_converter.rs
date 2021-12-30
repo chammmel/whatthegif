@@ -1,11 +1,12 @@
 use protobuf::well_known_types::Any;
 
-use crate::generated::communication::{JoinRequest, Message, PreJoinRequest};
+use crate::generated::communication::{JoinRequest, Message, PreJoinRequest, CreateRoomRequest};
 
 #[derive(Debug)]
 pub enum DataResult {
     JoinRequest(JoinRequest),
     PreJoinRequest(PreJoinRequest),
+    CreateRoomRequest(CreateRoomRequest),
 }
 
 fn get_message(bytes: Vec<u8>) -> Option<Message> {
@@ -49,6 +50,11 @@ pub fn data_parser(bytes: Vec<u8>, local_origin: &str) -> Result<DataResult, &'s
                     let out: JoinRequest =
                         ::protobuf::Message::parse_from_bytes(&payload.value).unwrap();
                     Ok(DataResult::JoinRequest(out))
+                }
+                "CreateRoomRequest" => {
+                    let out: CreateRoomRequest =
+                        ::protobuf::Message::parse_from_bytes(&payload.value).unwrap();
+                    Ok(DataResult::CreateRoomRequest(out))
                 }
                 _ => Err("Unknown data"),
             }

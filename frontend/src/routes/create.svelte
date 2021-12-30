@@ -3,10 +3,19 @@
 </script>
 
 <script lang="ts">
-  import AnimatedLogo from '$lib/header/AnimatedLogo.svelte';
   import Input from '$lib/input/Input.svelte';
   import Button from '$lib/input/Button.svelte';
   import Logo from '$lib/header/Logo.svelte';
+  import backend from '$lib/stores/backend';
+
+  let players = 8;
+  let rounds = 10;
+  let password = '';
+  let keywords = '';
+
+  function create() {
+    backend.createRoomRequest(players, rounds, password, keywords.replace(' ', '').split(','));
+  }
 </script>
 
 <svelte:head>
@@ -19,15 +28,30 @@
   </div>
   <h1>Create a Lobby</h1>
   <div class="grid">
-    <Input label="Max players" type="number" min={2} value={8} border="roundy" width="100%" />
-    <Input label="Rounds" type="number" min={1} max={69} value={10} border="roundy" width="100%" />
+    <Input
+      bind:value={players}
+      label="Max players"
+      type="number"
+      min={2}
+      border="roundy"
+      width="100%"
+    />
+    <Input
+      bind:value={rounds}
+      label="Rounds"
+      type="number"
+      min={1}
+      max={69}
+      border="roundy"
+      width="100%"
+    />
   </div>
   <span>Optional</span>
   <Input type="password" placeholder="Password" border="roundy" width="100%" />
   <div class="spacer" />
   <Input placeholder="Gif Keywords" border="roundy" width="100%" />
   <p>Seperate keywords by comma</p>
-  <Button width={'100%'} background="var(--green-color)">Create</Button>
+  <Button on:click={create} width={'100%'} background="var(--green-color)">Create</Button>
 </section>
 
 <style>

@@ -2,6 +2,11 @@ syntax = "proto2";
 
 import "google/protobuf/any.proto";
 
+message Message {
+  required string origin = 1;
+  required google.protobuf.Any payload = 2;
+}
+
 message PreJoinRequest {
   required string room = 1;
 }
@@ -45,7 +50,20 @@ message Vote {
   required string contentId = 1;
 }
 
-message Message {
-  required string origin = 1;
-  required google.protobuf.Any payload = 2;
+message CreateRoomRequest {
+  required int32 players = 1;
+  required int32 rounds = 2;
+  optional string password = 4;
+  repeated string keywords = 5;
 }
+
+message CreateRoomResponse {
+  required string code = 1;
+  required CreateRoomError errors = 2;
+}
+
+enum CreateRoomError {
+  DONE = 0;
+}
+
+

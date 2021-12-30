@@ -1,16 +1,23 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import backend from '$lib/stores/backend';
+  import { createEventDispatcher, onMount } from 'svelte';
+
+  const dispatch = createEventDispatcher();
   export let background: string;
   export let color: string = 'white';
   export let width: string = '389px';
   export let height: string = '56px';
   export let href: string = undefined;
 
+  onMount(() => backend.connect());
+
   function handleClick() {
+    dispatch('click');
     if (!href) {
       return;
     }
-    history.pushState(href, '', href);
-    window.location.href = href;
+    goto(href);
   }
 </script>
 

@@ -1,5 +1,7 @@
 import {
   Content,
+  CreateRoomRequest,
+  CreateRoomResponse,
   JoinResponse,
   Message,
   PreJoinRequest,
@@ -16,7 +18,7 @@ export class DataService {
     }
   };
 
-  public connectToServer = () => {
+  public connectToServer = (gotNewMessge: GotNewMessge) => {
     if (!this.socket) {
       this.socket = new WebSocket('ws://localhost:8080/websocket/' + this.clientId);
       console.log('Connected to websocket');
@@ -31,9 +33,12 @@ export class DataService {
         console.log('Got message', message);
         const content = await this.dataParser(message);
 
+        gotNewMessge(content);
+
         console.log(content);
       });
     }
+    return this;
   };
 
   public preJoinRequest = (room: string) => {
@@ -44,6 +49,26 @@ export class DataService {
     ).finish();
 
     this.sendMessage('PreJoinRequest', data);
+  };
+
+  public createRoomRequest = (
+    players: number,
+    rounds: number,
+    password: string,
+    keywords: Array<string>
+  ) => {
+    let raw: CreateRoomRequest = {
+      players,
+      rounds,
+      password,
+      keywords
+    };
+    if (password === '') {
+      delete raw.password;
+    }
+    const data = CreateRoomRequest.encode(CreateRoomRequest.fromJSON(raw)).finish();
+
+    this.sendMessage('CreateRoomRequest', data);
   };
 
   private toUint8Array = async (data: Blob): Promise<Uint8Array> =>
@@ -59,9 +84,10 @@ export class DataService {
       reader.readAsArrayBuffer(data);
     });
 
-  private dataParser = (message: Message): Promise<PreJoinResponse | JoinResponse | Content> =>
+  private dataParser = (
+    message: Message
+  ): Promise<PreJoinResponse | JoinResponse | Content | CreateRoomResponse> =>
     new Promise((resolve, reject) => {
-      console.log({ message });
       const buffer = message.payload.value;
       switch (message.payload.typeUrl) {
         case 'PreJoinResponse':
@@ -72,6 +98,9 @@ export class DataService {
           break;
         case 'Content':
           resolve(Content.decode(buffer));
+          break;
+        case 'CreateRoomResponse':
+          resolve(CreateRoomResponse.decode(buffer));
           break;
 
         default:
@@ -96,7 +125,13 @@ export class DataService {
     if (this.socket === undefined) {
       console.error('Unable to send data throw websocket');
     } else {
-      this.socket.send(bits);
+      if (this.socket.readyState <= 1) {
+        this.socket.send(bits);
+      }
     }
   };
+}
+
+export interface GotNewMessge {
+  (message: PreJoinResponse | JoinResponse | Content | CreateRoomResponse): void;
 }

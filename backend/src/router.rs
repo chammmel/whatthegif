@@ -4,6 +4,8 @@ use std::{
     thread::spawn,
 };
 
+use random_string::generate;
+
 use tungstenite::{
     accept_hdr,
     handshake::server::{Request, Response},
@@ -12,8 +14,8 @@ use tungstenite::{
 use crate::{
     configuration::Args,
     data_converter::{self, DataResult},
-    data_store::Store,
-    generated::communication::{JoinError, PreJoinResponse},
+    data_store::{Room, Store},
+    generated::communication::{CreateRoomResponse, JoinError, PreJoinResponse},
 };
 
 pub fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
@@ -39,7 +41,8 @@ pub fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
                 if msg.is_binary() {
                     match data_converter::data_parser(msg.into_data(), org.as_str()) {
                         Ok(data) => {
-                            let result = data_event_handler(data, "asd", &store, org.as_str()).unwrap();
+                            let result =
+                                data_event_handler(data, "asd", &store, org.as_str()).unwrap();
                             websocket
                                 .write_message(tungstenite::Message::Binary(result))
                                 .unwrap();
@@ -56,7 +59,7 @@ fn data_event_handler(
     data_result: DataResult,
     user: &str,
     store: &Arc<Mutex<Store>>,
-    origin: &str
+    origin: &str,
 ) -> Option<Vec<u8>> {
     let mut result = None;
     match data_result {
@@ -85,9 +88,41 @@ fn data_event_handler(
                 result = Some(::protobuf::Message::write_to_bytes(&reponse).unwrap());
             }
 
-            result = Some(data_converter::data_writer(result.unwrap(), "PreJoinResponse", &origin));
+            result = Some(data_converter::data_writer(
+                result.unwrap(),
+                "PreJoinResponse",
+                &origin,
+            ));
         }
         DataResult::JoinRequest(data) => println!("{}: {:?}", user, data),
+        DataResult::CreateRoomRequest(data) => {
+            println!("{}: {:?}", user, data);
+
+            let code = generate(6, "ABCDEFGHIJKLMNPRSTUVWXYZ123456789");
+            if let Ok(mut x) = store.lock() {
+                x.rooms.insert(
+                    code.clone(),
+                    Room {
+                        size: data.get_players(),
+                        max_size: i32::MAX,
+                        status: crate::data_store::RoomState::LOBBY,
+                        rounds: data.get_rounds(),
+                        users: vec![],
+                        password: None, //password: data.get_password(),
+                    },
+                );
+            }
+
+            let mut response = CreateRoomResponse::new();
+            response.set_code(code);
+            response.set_errors(crate::generated::communication::CreateRoomError::DONE);
+
+            result = Some(data_converter::data_writer(
+                protobuf::Message::write_to_bytes(&response).unwrap(),
+                "CreateRoomResponse",
+                &origin,
+            ));
+        }
         _ => println!("Unknown data in data_event_handler"),
     };
 

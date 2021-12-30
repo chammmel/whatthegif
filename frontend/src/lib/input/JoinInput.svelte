@@ -1,22 +1,17 @@
 <script lang="ts">
-  import { DataService } from '$lib/service/data.service';
+  import backend from '$lib/stores/backend';
   import { onMount } from 'svelte';
 
   export let width: string = '389px';
   export let height: string = '56px';
 
   let room = '';
-  let dataservice;
 
-  onMount(async () => {
-    dataservice = new DataService();
-    dataservice.connectToServer();
-  });
+  onMount(() => backend.connect());
 
   function join() {
-    /*dataservice.disconnectFromServer();*/
     if (room !== '') {
-      dataservice.preJoinRequest(room);
+      backend.preJoinRequest(room);
     }
     room = '';
   }
