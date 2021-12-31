@@ -11,6 +11,7 @@ mod data_store;
 mod generated;
 mod pubsub;
 mod router;
+mod handler;
 
 fn main() {
     let args = Args::parse();

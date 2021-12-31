@@ -30,6 +30,7 @@ message JoinResponse {
 message User {
   required string uuid = 1;
   required string name = 2;
+  required string image_url = 3;
 }
 
 enum JoinError {

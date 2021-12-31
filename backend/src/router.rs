@@ -15,7 +15,7 @@ use crate::{
     configuration::Args,
     data_converter::{self, DataResult},
     data_store::{Room, Store},
-    generated::communication::{CreateRoomResponse, JoinError, PreJoinResponse},
+    generated::communication::{CreateRoomResponse}, handler::join,
 };
 
 pub fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
@@ -63,38 +63,8 @@ fn data_event_handler(
 ) -> Option<Vec<u8>> {
     let mut result = None;
     match data_result {
-        DataResult::PreJoinRequest(data) => {
-            println!("{}: {:?}", user, data);
-
-            if let Ok(x) = store.lock() {
-                let mut reponse = PreJoinResponse::new();
-                let room = x.get_room(data.get_room());
-                match room {
-                    Some(room) => {
-                        let mut join_error = JoinError::FINE;
-                        if room.is_full() {
-                            join_error = JoinError::ROOM_FULL;
-                        }
-                        if room.has_password() {
-                            join_error = JoinError::REQUIRES_PASSWORD;
-                        }
-
-                        reponse.set_error(join_error);
-                    }
-                    None => {
-                        reponse.set_error(JoinError::NOT_FOUND);
-                    }
-                };
-                result = Some(::protobuf::Message::write_to_bytes(&reponse).unwrap());
-            }
-
-            result = Some(data_converter::data_writer(
-                result.unwrap(),
-                "PreJoinResponse",
-                &origin,
-            ));
-        }
-        DataResult::JoinRequest(data) => println!("{}: {:?}", user, data),
+        DataResult::JoinRequest(data) => result = join::join_request(data, &user, &store, &origin),
+        DataResult::PreJoinRequest(data) => result = join::pre_join_request(data, &user, &store, &origin),
         DataResult::CreateRoomRequest(data) => {
             println!("{}: {:?}", user, data);
 
@@ -108,6 +78,7 @@ fn data_event_handler(
                         status: crate::data_store::RoomState::LOBBY,
                         rounds: data.get_rounds(),
                         users: vec![],
+                        keywords: vec![],
                         password: None, //password: data.get_password(),
                     },
                 );
