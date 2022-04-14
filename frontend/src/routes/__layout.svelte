@@ -1,6 +1,13 @@
 <script lang="ts">
-  import Header from '$lib/header/Header.svelte';
+  import backend from '$lib/stores/backend';
+  import { onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import '../app.css';
+
+  let messages = [];
+
+  const unsubscribe = backend.subscribe(m => messages = m);
+  onDestroy(unsubscribe)
 </script>
 
 <svelte:head>
@@ -9,6 +16,14 @@
 
 <main>
   <slot />
+
+  <ul>
+    {#each messages as msg}
+      <li>
+        <p> {JSON.stringify(msg)}</p>
+      </li>
+    {/each}
+  </ul>
 </main>
 
 <style>

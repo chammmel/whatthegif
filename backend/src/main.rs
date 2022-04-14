@@ -1,4 +1,5 @@
-use std::{sync::{mpsc::channel, Mutex, Arc}, collections::HashMap};
+use std::{sync::{Mutex, Arc}, collections::HashMap};
+use tokio::sync::mpsc;
 
 use clap::Parser;
 use configuration::Args;
@@ -13,7 +14,8 @@ mod pubsub;
 mod router;
 mod handler;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Args::parse();
 
     let data_store = Store {
@@ -22,8 +24,8 @@ fn main() {
     let data_store = Mutex::new(data_store);
     let data_store = Arc::new(data_store);
 
-    let (internal_tx, internal_rx): _ = channel::<DataResult>();
-    let (external_tx, external_rx): _ = channel::<DataResult>();
+    let (internal_tx, internal_rx) = mpsc::channel::<DataResult>(100);
+    let (external_tx, external_rx) = mpsc::channel::<DataResult>(100);
 
     pubsub::initialize(&args, &data_store);
     router::start(&args, &data_store);

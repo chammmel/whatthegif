@@ -10,11 +10,11 @@ use crate::{
 
 pub fn pre_join_request(
     data: PreJoinRequest,
-    user: &str,
+    device_id: &str,
     store: &Arc<Mutex<Store>>,
     origin: &str,
 ) -> Option<Vec<u8>> {
-    println!("{}: {:?}", user, data);
+    println!("{}: {:?}", device_id, data);
 
     let mut reponse = PreJoinResponse::new();
 
@@ -46,11 +46,11 @@ pub fn pre_join_request(
 }
 pub fn join_request(
     data: JoinRequest,
-    user: &str,
+    device_id: &str,
     store: &Arc<Mutex<Store>>,
     origin: &str,
 ) -> Option<Vec<u8>> {
-    println!("{}: {:?}", user, data);
+    println!("{}: {:?}", device_id, data);
 
     let mut reponse = JoinResponse::new();
 

@@ -21,22 +21,24 @@ export class DataService {
   public connectToServer = (gotNewMessge: GotNewMessge) => {
     if (!this.socket) {
       this.socket = new WebSocket('ws://localhost:8080/websocket/' + this.clientId);
-      console.log('Connected to websocket');
 
-      this.socket.addEventListener('open', (event) => {
-        console.log(event);
-      });
-      this.socket.addEventListener('message', async (event) => {
-        const buffer = await this.toUint8Array(event.data);
+      if (this.socket !== undefined) {
+        this.socket.addEventListener('open', (event) => {
+          console.log('Connected to websocket');
+        });
+        this.socket.addEventListener('message', async (event) => {
+          const buffer = await this.toUint8Array(event.data);
 
-        const message = Message.decode(buffer);
-        console.log('Got message', message);
-        const content = await this.dataParser(message);
+          const message = Message.decode(buffer);
+          const content = await this.dataParser(message);
 
-        gotNewMessge(content);
+          gotNewMessge(content);
 
-        console.log(content);
-      });
+          console.log('Got message', message, content);
+        });
+      } else {
+        console.log('Unable to connect to websocket');
+      }
     }
     return this;
   };
@@ -89,17 +91,17 @@ export class DataService {
   ): Promise<PreJoinResponse | JoinResponse | Content | CreateRoomResponse> =>
     new Promise((resolve, reject) => {
       const buffer = message.payload.value;
-      switch (message.payload.typeUrl) {
-        case 'PreJoinResponse':
+      switch (message.payload.typeUrl as MessageType) {
+        case MessageType.PreJoinResponse:
           resolve(PreJoinResponse.decode(buffer));
           break;
-        case 'JoinResponse':
+        case MessageType.JoinResponse:
           resolve(JoinResponse.decode(buffer));
           break;
-        case 'Content':
+        case MessageType.Content:
           resolve(Content.decode(buffer));
           break;
-        case 'CreateRoomResponse':
+        case MessageType.CreateRoomResponse:
           resolve(CreateRoomResponse.decode(buffer));
           break;
 
@@ -110,8 +112,6 @@ export class DataService {
     });
 
   private sendMessage = (typeUrl: string, value: Uint8Array) => {
-    console.log(typeUrl, value);
-
     const bits = Message.encode(
       Message.fromPartial({
         origin: 'client',
@@ -130,6 +130,13 @@ export class DataService {
       }
     }
   };
+}
+
+export enum MessageType {
+  PreJoinResponse = "PreJoinResponse",
+  JoinResponse = "JoinResponse",
+  Content = "Content",
+  CreateRoomResponse = "CreateRoomResponse"
 }
 
 export interface GotNewMessge {

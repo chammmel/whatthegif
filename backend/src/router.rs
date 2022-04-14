@@ -15,7 +15,8 @@ use crate::{
     configuration::Args,
     data_converter::{self, DataResult},
     data_store::{Room, Store},
-    generated::communication::{CreateRoomResponse}, handler::join,
+    generated::communication::CreateRoomResponse,
+    handler::join,
 };
 
 pub fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
@@ -57,16 +58,21 @@ pub fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
 
 fn data_event_handler(
     data_result: DataResult,
-    user: &str,
+    device_id: &str,
     store: &Arc<Mutex<Store>>,
     origin: &str,
 ) -> Option<Vec<u8>> {
+    println!("{data_result:?}, device_id: {device_id}, origin: {origin}");
     let mut result = None;
     match data_result {
-        DataResult::JoinRequest(data) => result = join::join_request(data, &user, &store, &origin),
-        DataResult::PreJoinRequest(data) => result = join::pre_join_request(data, &user, &store, &origin),
+        DataResult::JoinRequest(data) => {
+            result = join::join_request(data, &device_id, &store, &origin)
+        }
+        DataResult::PreJoinRequest(data) => {
+            result = join::pre_join_request(data, &device_id, &store, &origin)
+        }
         DataResult::CreateRoomRequest(data) => {
-            println!("{}: {:?}", user, data);
+            println!("{}: {:?}", device_id, data);
 
             let code = generate(6, "ABCDEFGHIJKLMNPRSTUVWXYZ123456789");
             if let Ok(mut x) = store.lock() {
