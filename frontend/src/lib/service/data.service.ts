@@ -10,7 +10,17 @@ import {
 
 export class DataService {
   private socket: WebSocket = undefined;
-  private clientId = Date.now();
+  private clientId;
+
+  private setClientId() {
+    const clientId = localStorage.getItem("clientId");
+
+    if (clientId === null) {
+      localStorage.setItem("clientId", Date.now().toString());
+    }
+
+    this.clientId = localStorage.getItem("clientId");
+  }
 
   public disconnectFromServer = () => {
     if (this.socket) {
@@ -20,6 +30,7 @@ export class DataService {
 
   public connectToServer = (gotNewMessge: GotNewMessge) => {
     if (!this.socket) {
+      this.setClientId();
       this.socket = new WebSocket('ws://localhost:8080/websocket/' + this.clientId);
 
       if (this.socket !== undefined) {
