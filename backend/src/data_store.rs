@@ -33,13 +33,7 @@ impl Room {
     }
 
     pub fn is_full(&self) -> bool {
-        if self.size == i32::MAX {
-            true
-        } else if self.size >= self.max_size {
-            false
-        } else {
-            true
-        }
+        self.size >= self.max_size
     }
 
     pub fn is_running(&self) -> bool {

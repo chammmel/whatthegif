@@ -1,4 +1,5 @@
 use protobuf::well_known_types::Any;
+use log::log;
 
 use crate::generated::communication::{JoinRequest, Message, PreJoinRequest, CreateRoomRequest};
 
@@ -13,7 +14,7 @@ fn get_message(bytes: Vec<u8>) -> Option<Message> {
     match ::protobuf::Message::parse_from_bytes(&bytes) {
         Ok(data) => Some(data),
         Err(_) => {
-            println!("Unable to decode Message, {:?}", &bytes);
+            log::debug!("Unable to decode Message, {bytes:?}");
             None
         }
     }

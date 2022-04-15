@@ -1,14 +1,14 @@
 use std::{
     net::TcpListener,
     sync::{Arc, Mutex},
-    thread::spawn,
 };
 
+use log::log;
 use random_string::generate;
 
 use tungstenite::{
     accept_hdr,
-    handshake::server::{Request, Response},
+    handshake::server::{Request, Response, ErrorResponse},
 };
 
 use crate::{
@@ -25,30 +25,35 @@ pub fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
 
     let origin: Arc<String> = Arc::new(args.get_origin().unwrap());
 
-    println!("Started Websocket at {}", &ip);
+    log::debug!("Started Websocket at {}", &ip);
     for stream in server.incoming() {
         let org = Arc::clone(&origin);
         let store = Arc::clone(&data_store);
-        spawn(move || {
+        tokio::spawn(async move {
+            let pathg = "asd";
             let callback = |req: &Request, response: Response| {
-                println!("The request's path is: {}", req.uri().path());
+                let path = req.uri().path();
+                log::debug!("the request's path is: {path}");
+                //pathg = path;
                 Ok(response)
             };
+
+
             let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
 
             loop {
-                let msg = websocket.read_message().unwrap();
-
-                if msg.is_binary() {
-                    match data_converter::data_parser(msg.into_data(), org.as_str()) {
-                        Ok(data) => {
-                            let result =
-                                data_event_handler(data, "asd", &store, org.as_str()).unwrap();
-                            websocket
-                                .write_message(tungstenite::Message::Binary(result))
-                                .unwrap();
+                if let Ok(msg) = websocket.read_message() {
+                    if msg.is_binary() {
+                        match data_converter::data_parser(msg.into_data(), org.as_str()) {
+                            Ok(data) => {
+                                let result =
+                                    data_event_handler(data, pathg, &store, org.as_str()).unwrap();
+                                websocket
+                                    .write_message(tungstenite::Message::Binary(result))
+                                    .unwrap();
+                            }
+                            Err(_) => todo!(),
                         }
-                        Err(_) => todo!(),
                     }
                 }
             }
@@ -62,7 +67,7 @@ fn data_event_handler(
     store: &Arc<Mutex<Store>>,
     origin: &str,
 ) -> Option<Vec<u8>> {
-    println!("{data_result:?}, device_id: {device_id}, origin: {origin}");
+    log::debug!("{data_result:?}, device_id: {device_id}, origin: {origin}");
     let mut result = None;
     match data_result {
         DataResult::JoinRequest(data) => {
@@ -72,7 +77,7 @@ fn data_event_handler(
             result = join::pre_join_request(data, &device_id, &store, &origin)
         }
         DataResult::CreateRoomRequest(data) => {
-            println!("{}: {:?}", device_id, data);
+            log::debug!("{device_id}: {data:?}");
 
             let code = generate(6, "ABCDEFGHIJKLMNPRSTUVWXYZ123456789");
             if let Ok(mut x) = store.lock() {
@@ -100,7 +105,7 @@ fn data_event_handler(
                 &origin,
             ));
         }
-        _ => println!("Unknown data in data_event_handler"),
+        _ => log::info!("Unknown data in data_event_handler"),
     };
 
     result

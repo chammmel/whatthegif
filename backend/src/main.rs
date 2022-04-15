@@ -14,8 +14,12 @@ mod pubsub;
 mod router;
 mod handler;
 
+extern crate pretty_env_logger;
+#[macro_use] extern crate log;
+
 #[tokio::main]
 async fn main() {
+    pretty_env_logger::init();
     let args = Args::parse();
 
     let data_store = Store {

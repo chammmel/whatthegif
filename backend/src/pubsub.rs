@@ -2,6 +2,7 @@ use std::{
     sync::{Arc, Mutex},
     thread::spawn,
 };
+use log::log;
 
 use redis::Client;
 
@@ -12,17 +13,17 @@ pub fn initialize(args: &Args, data_store: &Arc<Mutex<Store>>) {
         Some(redis) => {
             connect(redis, data_store);
         }
-        _ => println!("Running backend in local mode without redis"),
+        _ => log::debug!("Running backend in local mode without redis"),
     }
 }
 
 fn connect(redis: String, data_store: &Arc<Mutex<Store>>) {
     spawn(move || match Client::open(&*redis) {
         Ok(client) => {
-            println!("Connecting ... to redis: {}", &redis);
+            log::debug!("Connecting ... to redis: {redis}");
             match client.get_connection() {
                 Ok(mut connection) => {
-                    println!("Connected to redis: {}", &redis);
+                    log::debug!("Connected to redis: {redis}");
                     let mut pubsub = connection.as_pubsub();
                     pubsub.subscribe("whatthegif").unwrap();
 
@@ -32,9 +33,9 @@ fn connect(redis: String, data_store: &Arc<Mutex<Store>>) {
                         let msg = pubsub.get_message();
                     }
                 }
-                Err(_) => println!("Unable to connect to: {}", &redis),
+                Err(_) => log::debug!("Unable to connect to: {redis}"),
             }
         }
-        Err(_) => println!("Invalid url: {}", &redis),
+        Err(_) => log::debug!("Invalid url: {redis}"),
     });
 }

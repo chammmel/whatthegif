@@ -9,7 +9,7 @@ pub struct Args {
     redis: String,
 
     /// Origin name
-    #[clap(short, long, default_value = "euw")]
+    #[clap(short, long, default_value = "eu-1")]
     origin: String,
 }
 
