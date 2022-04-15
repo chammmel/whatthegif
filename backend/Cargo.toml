@@ -10,8 +10,9 @@ clap = { version = "3.0.0-rc.8", features = ["derive"] }
 tokio = { version = "1.17.0", features = ["full"] }
 redis = "0.21.4"
 protobuf = "2.25.2"
-tungstenite = "0.17"
-tokio-tungstenite = "0.17"
 random-string = "1.0"
 log = "0.4"
 pretty_env_logger = "0.4"
+warp = "0.3"
+futures = { version = "0.3", default-features = false }
+tokio-stream = "0.1.8"

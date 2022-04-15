@@ -1,5 +1,5 @@
-use std::{sync::{Mutex, Arc}, collections::HashMap};
-use tokio::sync::mpsc;
+use std::{sync::Arc, collections::HashMap};
+use tokio::sync::{mpsc, Mutex};
 
 use clap::Parser;
 use configuration::Args;
@@ -32,5 +32,5 @@ async fn main() {
     let (external_tx, external_rx) = mpsc::channel::<DataResult>(100);
 
     pubsub::initialize(&args, &data_store);
-    router::start(&args, &data_store);
+    router::start(&args, &data_store).await;
 }

@@ -1,7 +1,12 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::{Arc}};
+
+use tokio::sync::Mutex;
+
+
+pub type DataStore = Arc<Mutex<Store>>;
 
 pub struct Store {
-    pub(crate) rooms: HashMap<String, Room>,
+    pub rooms: HashMap<String, Room>,
 }
 
 impl Store {

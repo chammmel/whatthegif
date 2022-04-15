@@ -30,8 +30,7 @@ export class DataService {
 
   public connectToServer = (gotNewMessge: GotNewMessge) => {
     if (!this.socket) {
-      this.setClientId();
-      this.socket = new WebSocket('ws://localhost:8080/websocket/' + this.clientId);
+      this.socket = new WebSocket('ws://localhost:8080/ws');
 
       if (this.socket !== undefined) {
         this.socket.addEventListener('open', (event) => {

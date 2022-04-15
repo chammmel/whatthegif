@@ -1,99 +1,190 @@
-use std::{
-    net::TcpListener,
-    sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, convert::Infallible, sync::Arc};
 
-use log::log;
 use random_string::generate;
 
-use tungstenite::{
-    accept_hdr,
-    handshake::server::{Request, Response, ErrorResponse},
+use futures::SinkExt;
+use futures::StreamExt;
+
+use tokio::sync::mpsc::UnboundedReceiver;
+use tokio::sync::{
+    mpsc::{self, UnboundedSender},
+    Mutex,
+};
+use warp::{
+    ws::{Message, WebSocket},
+    Filter, Rejection, Reply,
 };
 
 use crate::{
     configuration::Args,
     data_converter::{self, DataResult},
-    data_store::{Room, Store},
+    data_store::{DataStore, Room, Store},
     generated::communication::CreateRoomResponse,
     handler::join,
 };
 
-pub fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
-    let ip = "127.0.0.1:8080";
-    let server = TcpListener::bind(&ip).unwrap();
+#[derive(Clone)]
+pub struct Client {
+    pub user_id: usize,
+    pub topics: Vec<String>,
+    pub sender: Option<mpsc::UnboundedSender<Message>>,
+}
 
-    let origin: Arc<String> = Arc::new(args.get_origin().unwrap());
+type Result<T> = std::result::Result<T, Rejection>;
+type Clients = Arc<Mutex<HashMap<String, Client>>>;
 
-    log::debug!("Started Websocket at {}", &ip);
-    for stream in server.incoming() {
-        let org = Arc::clone(&origin);
-        let store = Arc::clone(&data_store);
-        tokio::spawn(async move {
-            let pathg = "asd";
-            let callback = |req: &Request, response: Response| {
-                let path = req.uri().path();
-                log::debug!("the request's path is: {path}");
-                //pathg = path;
-                Ok(response)
-            };
+type Org = String;
 
+pub async fn client_connection(
+    ws: WebSocket,
+    id: String,
+    clients: Clients,
+    mut client: Client,
+    data_store: DataStore,
+    org: Org,
+) {
+    let (mut client_ws_sender, mut client_ws_rcv) = ws.split();
+    let (client_sender, mut client_rcv): (UnboundedSender<Message>, UnboundedReceiver<Message>) =
+        mpsc::unbounded_channel();
 
-            let mut websocket = accept_hdr(stream.unwrap(), callback).unwrap();
-
-            loop {
-                if let Ok(msg) = websocket.read_message() {
-                    if msg.is_binary() {
-                        match data_converter::data_parser(msg.into_data(), org.as_str()) {
-                            Ok(data) => {
-                                let result =
-                                    data_event_handler(data, pathg, &store, org.as_str()).unwrap();
-                                websocket
-                                    .write_message(tungstenite::Message::Binary(result))
-                                    .unwrap();
-                            }
-                            Err(_) => todo!(),
-                        }
-                    }
-                }
+    tokio::task::spawn(async move {
+        while let Some(c) = &client_rcv.recv().await {
+            //client_ws_sender.reunite
+            match client_ws_sender.send(c.to_owned()).await {
+                Ok(_) => {},
+                Err(_) => log::error!("Unable to send message to client"),
             }
-        });
+        }
+    });
+
+    client.sender = Some(client_sender);
+    clients.lock().await.insert(id.clone(), client);
+    log::info!("The client {id} connected");
+
+    while let Some(result) = client_ws_rcv.next().await {
+        let msg = match result {
+            Ok(msg) => msg,
+            Err(e) => {
+                log::error!("error receiving ws message for id: {}): {}", id.clone(), e);
+                break;
+            }
+        };
+        client_msg(&id, msg, &clients, &data_store, &org).await;
+    }
+
+    clients.lock().await.remove(&id);
+    log::info!("The client: {id} disconnected");
+}
+
+pub async fn ws_handler(
+    ws: warp::ws::Ws,
+    id: String,
+    clients: Clients,
+    data_store: DataStore,
+    org: Org,
+) -> Result<impl Reply> {
+    let client = clients.lock().await.get(&id).cloned();
+    match client {
+        Some(c) => {
+            Ok(ws.on_upgrade(move |socket| {
+                client_connection(socket, id, clients, c, data_store, org)
+            }))
+        }
+        None => Err(warp::reject::not_found()),
     }
 }
 
-fn data_event_handler(
+fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
+    warp::any().map(move || clients.clone())
+}
+
+fn with_org(org: Org) -> impl Filter<Extract = (Org,), Error = Infallible> + Clone {
+    warp::any().map(move || org.clone())
+}
+
+fn with_data_store(
+    data_store: DataStore,
+) -> impl Filter<Extract = (DataStore,), Error = Infallible> + Clone {
+    warp::any().map(move || data_store.clone())
+}
+
+pub async fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
+    let clients: Clients = Arc::new(Mutex::new(HashMap::new()));
+    let org = args.get_origin().unwrap_or_default();
+
+    let ws_route = warp::path("ws")
+        .and(warp::ws())
+        .and(warp::path::param())
+        .and(with_clients(clients.clone()))
+        .and(with_data_store(data_store.clone()))
+        .and(with_org(org.clone()))
+        .and_then(ws_handler);
+
+    let routes = ws_route.with(warp::cors().allow_any_origin());
+
+    log::info!("Webserver will start");
+    warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+}
+
+async fn client_msg(id: &str, msg: Message, clients: &Clients, store: &DataStore, org: &Org) {
+    match data_converter::data_parser(msg.into_bytes(), org.as_str()) {
+        Ok(data) => {
+            let result = data_event_handler(data, &id, store, org.as_str()).await;
+
+            match result {
+                Some(result) => {
+                    let result = Message::binary(result);
+
+                    if let Some(client) = clients.lock().await.get_mut(id) {
+                        match client.sender.as_ref().unwrap().send(result) {
+                            Ok(_) => {},
+                            Err(_) => log::error!("Unable to send message"),
+                        }
+                    }
+                }
+                None => {
+                    log::error!("No aswer for clinet: {id}");
+                }
+            }
+        }
+        Err(_) => {
+            log::error!("Unexpected data reseved from client: {id}");
+        }
+    }
+}
+
+async fn data_event_handler(
     data_result: DataResult,
     device_id: &str,
-    store: &Arc<Mutex<Store>>,
+    store: &DataStore,
     origin: &str,
 ) -> Option<Vec<u8>> {
     log::debug!("{data_result:?}, device_id: {device_id}, origin: {origin}");
     let mut result = None;
     match data_result {
         DataResult::JoinRequest(data) => {
-            result = join::join_request(data, &device_id, &store, &origin)
+            result = join::join_request(data, &device_id, &store, &origin).await
         }
         DataResult::PreJoinRequest(data) => {
-            result = join::pre_join_request(data, &device_id, &store, &origin)
+            result = join::pre_join_request(data, &device_id, &store, &origin).await
         }
         DataResult::CreateRoomRequest(data) => {
             log::debug!("{device_id}: {data:?}");
 
             let code = generate(6, "ABCDEFGHIJKLMNPRSTUVWXYZ123456789");
-            if let Ok(mut x) = store.lock() {
-                x.rooms.insert(
-                    code.clone(),
-                    Room {
-                        size: data.get_players(),
-                        max_size: i32::MAX,
-                        status: crate::data_store::RoomState::LOBBY,
-                        rounds: data.get_rounds(),
-                        users: vec![],
-                        keywords: vec![],
-                        password: None, //password: data.get_password(),
-                    },
-                );
-            }
+            let mut store = store.lock().await;
+            store.rooms.insert(
+                code.clone(),
+                Room {
+                    size: data.get_players(),
+                    max_size: i32::MAX,
+                    status: crate::data_store::RoomState::LOBBY,
+                    rounds: data.get_rounds(),
+                    users: vec![],
+                    keywords: vec![],
+                    password: None, //password: data.get_password(),
+                },
+            );
 
             let mut response = CreateRoomResponse::new();
             response.set_code(code);
