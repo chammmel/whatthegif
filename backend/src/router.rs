@@ -5,11 +5,16 @@ use random_string::generate;
 use futures::SinkExt;
 use futures::StreamExt;
 
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::json;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
     Mutex,
 };
+use uuid::Uuid;
+use warp::hyper::StatusCode;
 use warp::{
     ws::{Message, WebSocket},
     Filter, Rejection, Reply,
@@ -23,6 +28,16 @@ use crate::{
     handler::join,
 };
 
+#[derive(Deserialize, Debug)]
+pub struct RegisterRequest {
+    user_id: usize,
+}
+
+#[derive(Serialize, Debug)]
+pub struct RegisterResponse {
+    url: String,
+}
+
 #[derive(Clone)]
 pub struct Client {
     pub user_id: usize,
@@ -34,6 +49,32 @@ type Result<T> = std::result::Result<T, Rejection>;
 type Clients = Arc<Mutex<HashMap<String, Client>>>;
 
 type Org = String;
+
+pub async fn register_handler(body: RegisterRequest, clients: Clients) -> Result<impl Reply> {
+    let user_id = body.user_id;
+    let uuid = Uuid::new_v4().simple().to_string();
+
+    register_client(uuid.clone(), user_id, clients).await;
+    Ok(warp::reply::json(&RegisterResponse {
+        url: format!("ws://127.0.0.1/api/ws/{}", uuid),
+    }))
+}
+
+async fn register_client(id: String, user_id: usize, clients: Clients) {
+    clients.lock().await.insert(
+        id,
+        Client {
+            user_id,
+            topics: vec![String::from("cats")],
+            sender: None,
+        },
+    );
+}
+
+pub async fn unregister_handler(id: String, clients: Clients) -> Result<impl Reply> {
+    clients.lock().await.remove(&id);
+    Ok(StatusCode::OK)
+}
 
 pub async fn client_connection(
     ws: WebSocket,
@@ -51,7 +92,7 @@ pub async fn client_connection(
         while let Some(c) = &client_rcv.recv().await {
             //client_ws_sender.reunite
             match client_ws_sender.send(c.to_owned()).await {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_) => log::error!("Unable to send message to client"),
             }
         }
@@ -90,7 +131,11 @@ pub async fn ws_handler(
                 client_connection(socket, id, clients, c, data_store, org)
             }))
         }
-        None => Err(warp::reject::not_found()),
+        None => {
+            log::info!("Client does not exist");
+
+            Err(warp::reject::not_found())
+        }
     }
 }
 
@@ -112,6 +157,18 @@ pub async fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
     let clients: Clients = Arc::new(Mutex::new(HashMap::new()));
     let org = args.get_origin().unwrap_or_default();
 
+    let register = warp::path("register");
+    let register_routes = register
+        .and(warp::post())
+        .and(warp::body::json())
+        .and(with_clients(clients.clone()))
+        .and_then(register_handler)
+        .or(register
+            .and(warp::delete())
+            .and(warp::path::param())
+            .and(with_clients(clients.clone()))
+            .and_then(unregister_handler));
+
     let ws_route = warp::path("ws")
         .and(warp::ws())
         .and(warp::path::param())
@@ -120,10 +177,13 @@ pub async fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
         .and(with_org(org.clone()))
         .and_then(ws_handler);
 
-    let routes = ws_route.with(warp::cors().allow_any_origin());
+    let routes = register_routes
+        .or(ws_route);
+
+    let api_routes = warp::path("api").and(routes).with(warp::cors().allow_any_origin());
 
     log::info!("Webserver will start");
-    warp::serve(routes).run(([127, 0, 0, 1], 8080)).await;
+    warp::serve(api_routes).run(([127, 0, 0, 1], 8080)).await;
 }
 
 async fn client_msg(id: &str, msg: Message, clients: &Clients, store: &DataStore, org: &Org) {
@@ -137,7 +197,7 @@ async fn client_msg(id: &str, msg: Message, clients: &Clients, store: &DataStore
 
                     if let Some(client) = clients.lock().await.get_mut(id) {
                         match client.sender.as_ref().unwrap().send(result) {
-                            Ok(_) => {},
+                            Ok(_) => {}
                             Err(_) => log::error!("Unable to send message"),
                         }
                     }
