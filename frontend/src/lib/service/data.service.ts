@@ -32,7 +32,7 @@ export class DataService {
   };
 
   public connectToServer = (gotNewMessge: GotNewMessge) => {
-    if (!this.socket) {
+    if (!this.clientId) {
       this.clientId = this.getClientId();
       console.log(this.clientId);
 
