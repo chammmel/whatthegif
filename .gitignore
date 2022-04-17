@@ -1,0 +1,4 @@
+frontend/src/lib/generated/google/protobuf
+frontend/src/lib/generated/protocol
+
+backend/src/generated/communication.rs
