@@ -13,13 +13,13 @@ export class DataService {
   private clientId;
 
   private setClientId() {
-    const clientId = localStorage.getItem("clientId");
+    const clientId = localStorage.getItem('clientId');
 
     if (clientId === null) {
-      localStorage.setItem("clientId", Date.now().toString());
+      localStorage.setItem('clientId', Date.now().toString());
     }
 
-    this.clientId = localStorage.getItem("clientId");
+    this.clientId = localStorage.getItem('clientId');
   }
 
   public disconnectFromServer = () => {
@@ -144,10 +144,10 @@ export class DataService {
 }
 
 export enum MessageType {
-  PreJoinResponse = "PreJoinResponse",
-  JoinResponse = "JoinResponse",
-  Content = "Content",
-  CreateRoomResponse = "CreateRoomResponse"
+  PreJoinResponse = 'PreJoinResponse',
+  JoinResponse = 'JoinResponse',
+  Content = 'Content',
+  CreateRoomResponse = 'CreateRoomResponse'
 }
 
 export interface GotNewMessge {

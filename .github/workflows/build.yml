@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install protobuf-compiler
+        run: sudo apt-get install -y protobuf-compiler
+      - name: Install protobuf-codegen
+        uses: baptiste0928/cargo-install@v1
+        with:
+          crate: protobuf-codegen
+          version: "2.27.1"
+
+      - uses: actions/checkout@v3
+
+      - name: Install Frontend dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Generate protocol files
+        run: ./generate.sh
+
+      #- name: Build Frontend
+        #run: npm run build
+        #working-directory: frontend
+
+      - name: Build Backend
+        run: cargo build
+        working-directory: backend
+      - name: Run Backend tests
+        run: cargo test
+        working-directory: backend
