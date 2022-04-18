@@ -1,5 +1,4 @@
 use protobuf::well_known_types::Any;
-use log::log;
 
 use crate::generated::communication::{JoinRequest, Message, PreJoinRequest, CreateRoomRequest};
 

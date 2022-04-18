@@ -3,6 +3,8 @@
   import { onDestroy } from 'svelte';
   import { onMount } from 'svelte';
   import '../app.css';
+
+  onMount(() => backend.listen());
 </script>
 
 <svelte:head>

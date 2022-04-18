@@ -10,17 +10,7 @@ import {
 
 export class DataService {
   private socket: WebSocket = undefined;
-  private clientId;
-
-  private setClientId() {
-    const clientId = localStorage.getItem('clientId');
-
-    if (clientId === null) {
-      localStorage.setItem('clientId', Date.now().toString());
-    }
-
-    this.clientId = localStorage.getItem('clientId');
-  }
+  private clientId: number;
 
   public disconnectFromServer = () => {
     if (this.socket) {
@@ -28,28 +18,46 @@ export class DataService {
     }
   };
 
+  private getUrl = async (): Promise<string> => {
+    const resp = await fetch('http://localhost/api/register', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ user_id: this.clientId })
+    });
+    const body = await resp.json();
+    return body.url;
+  };
+
   public connectToServer = (gotNewMessge: GotNewMessge) => {
-    if (!this.socket) {
-      this.setClientId();
-      this.socket = new WebSocket('ws://localhost:8080/websocket/' + this.clientId);
+    if (!this.clientId) {
+      this.clientId = this.getClientId();
+      console.log(this.clientId);
 
-      if (this.socket !== undefined) {
-        this.socket.addEventListener('open', (event) => {
-          console.log('Connected to websocket');
-        });
-        this.socket.addEventListener('message', async (event) => {
-          const buffer = await this.toUint8Array(event.data);
+      this.getUrl().then((url) => {
+        this.socket = new WebSocket(url);
 
-          const message = Message.decode(buffer);
-          const content = await this.dataParser(message);
+        if (this.socket !== undefined) {
+          this.socket.addEventListener('open', (event) => {
+            console.log('Connected to websocket');
+          });
+          this.socket.addEventListener('message', async (event) => {
+            const buffer = await this.toUint8Array(event.data);
 
-          gotNewMessge(content);
+            const message = Message.decode(buffer);
+            let messageType = message.payload.typeUrl as MessageType;
+            const content = await this.dataParser(message);
 
-          console.log('Got message', message, content);
-        });
-      } else {
-        console.log('Unable to connect to websocket');
-      }
+            gotNewMessge({ data: content, messageType});
+
+            console.log('Got message', message, content);
+          });
+        } else {
+          console.log('Unable to connect to websocket');
+        }
+      });
     }
     return this;
   };
@@ -83,6 +91,17 @@ export class DataService {
 
     this.sendMessage('CreateRoomRequest', data);
   };
+
+  private getClientId(): number {
+    const key = 'client_id';
+    const existing_clinet_id = localStorage.getItem(key);
+
+    if (existing_clinet_id === null) {
+      localStorage.setItem(key, Date.now().toString());
+    }
+
+    return parseInt(localStorage.getItem(key));
+  }
 
   private toUint8Array = async (data: Blob): Promise<Uint8Array> =>
     new Promise((resolve) => {
@@ -150,6 +169,11 @@ export enum MessageType {
   CreateRoomResponse = 'CreateRoomResponse'
 }
 
+export interface NewMessage {
+  data: PreJoinResponse | JoinResponse | Content | CreateRoomResponse;
+  messageType: MessageType;
+}
+
 export interface GotNewMessge {
-  (message: PreJoinResponse | JoinResponse | Content | CreateRoomResponse): void;
+  (message: NewMessage): void;
 }
