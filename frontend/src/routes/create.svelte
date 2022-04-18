@@ -22,39 +22,51 @@
   <title>WhatTheGif | Create a Lobby</title>
 </svelte:head>
 
-<section>
-  <div class="logo">
-    <Logo />
-  </div>
-  <h1>Create a Lobby</h1>
-  <div class="grid">
-    <Input
-      bind:value={players}
-      label="Max players"
-      type="number"
-      min={2}
-      border="roundy"
-      width="100%"
-    />
-    <Input
-      bind:value={rounds}
-      label="Rounds"
-      type="number"
-      min={1}
-      max={69}
-      border="roundy"
-      width="100%"
-    />
-  </div>
-  <span>Optional</span>
-  <Input type="password" placeholder="Password" border="roundy" width="100%" />
-  <div class="spacer" />
-  <Input placeholder="Gif Keywords" border="roundy" width="100%" />
-  <p>Seperate keywords by comma</p>
-  <Button on:click={create} width={'100%'} background="var(--green-color)">Create</Button>
-</section>
+<main>
+  <section>
+    <div class="logo">
+      <Logo />
+    </div>
+    <h1>Create a Lobby</h1>
+    <div class="grid">
+      <Input
+        bind:value={players}
+        label="Max players"
+        type="number"
+        min={2}
+        border="roundy"
+        width="100%"
+      />
+      <Input
+        bind:value={rounds}
+        label="Rounds"
+        type="number"
+        min={1}
+        max={69}
+        border="roundy"
+        width="100%"
+      />
+    </div>
+    <span>Optional</span>
+    <Input type="password" placeholder="Password" border="roundy" width="100%" />
+    <div class="spacer" />
+    <Input placeholder="Gif Keywords" border="roundy" width="100%" />
+    <p>Seperate keywords by comma</p>
+    <Button on:click={create} width={'100%'} background="var(--green-color)">Create</Button>
+  </section>
+</main>
 
 <style>
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    height: 100vh;
+    max-width: 1024px;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
   h1 {
     text-align: center;
     font-size: 30px;
