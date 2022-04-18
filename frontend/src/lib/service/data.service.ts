@@ -36,7 +36,6 @@ export class DataService {
       this.clientId = this.getClientId();
       console.log(this.clientId);
 
-
       this.getUrl().then((url) => {
         this.socket = new WebSocket(url);
 
@@ -48,9 +47,10 @@ export class DataService {
             const buffer = await this.toUint8Array(event.data);
 
             const message = Message.decode(buffer);
+            let messageType = message.payload.typeUrl as MessageType;
             const content = await this.dataParser(message);
 
-            gotNewMessge(content);
+            gotNewMessge({ data: content, messageType});
 
             console.log('Got message', message, content);
           });
@@ -169,6 +169,11 @@ export enum MessageType {
   CreateRoomResponse = 'CreateRoomResponse'
 }
 
+export interface NewMessage {
+  data: PreJoinResponse | JoinResponse | Content | CreateRoomResponse;
+  messageType: MessageType;
+}
+
 export interface GotNewMessge {
-  (message: PreJoinResponse | JoinResponse | Content | CreateRoomResponse): void;
+  (message: NewMessage): void;
 }

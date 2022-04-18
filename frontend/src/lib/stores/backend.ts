@@ -1,26 +1,28 @@
-import type {
-  Content,
-  CreateRoomResponse,
-  JoinResponse,
-  PreJoinResponse
-} from '$lib/generated/protocol/communication';
-import { DataService } from '$lib/service/data.service';
+import { DataService, type NewMessage } from '$lib/service/data.service';
+import { handle } from '$lib/service/event-handler.service';
 
 import { writable } from 'svelte/store';
 
-const defaultValue = [];
+export const messages = writable<Array<NewMessage>>([]);
 
-export const messages =
-  writable<Array<PreJoinResponse | JoinResponse | Content | CreateRoomResponse>>(defaultValue);
+export const latestMessage = writable<NewMessage>();
 
-const addMessage = (data: PreJoinResponse | JoinResponse | Content | CreateRoomResponse) => {
-  messages.update((mgs) => [...mgs, data]);
+const addMessage = (newMessage: NewMessage) => {
+  messages.update((mgs) => [...mgs, newMessage]);
+  latestMessage.set(newMessage);
 };
 
 const dataService = new DataService();
 
 export default {
   subscribe: messages.subscribe,
+  listen: () => {
+    latestMessage.subscribe((m) => {
+      if (m) {
+        handle(m);
+      }
+    });
+  },
   connect: () => {
     dataService.connectToServer(addMessage);
   },
