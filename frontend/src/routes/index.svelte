@@ -13,19 +13,31 @@
   <title>WhatTheGif</title>
 </svelte:head>
 
-<section>
-  <div class="logo">
-    <AnimatedLogo />
-  </div>
-  <JoinInput width={'100%'} />
-  <span>OR</span>
-  <Button href="/create" width={'100%'} background="var(--green-color)">Create a lobby</Button>
-</section>
-<Footer />
+<main>
+  <section>
+    <div class="logo">
+      <AnimatedLogo />
+    </div>
+    <JoinInput width={'100%'} />
+    <span>OR</span>
+    <Button href="/create" width={'100%'} background="var(--green-color)">Create a lobby</Button>
+  </section>
+  <Footer />
+</main>
 
 <style>
   .logo {
     margin-bottom: 50px;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    height: 100vh;
+    max-width: 1024px;
+    margin: 0 auto;
+    box-sizing: border-box;
   }
   section {
     display: flex;
