@@ -7,8 +7,4 @@
   onMount(() => backend.listen());
 </script>
 
-<svelte:head>
-  <link rel="stylesheet" href="css/global.css" />
-</svelte:head>
-
 <slot />
