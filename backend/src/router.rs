@@ -5,14 +5,15 @@ use random_string::generate;
 use futures::SinkExt;
 use futures::StreamExt;
 
+use futures::TryFutureExt;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::json;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::sync::{
     mpsc::{self, UnboundedSender},
     Mutex,
 };
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use uuid::Uuid;
 use warp::hyper::StatusCode;
 use warp::{
@@ -20,6 +21,8 @@ use warp::{
     Filter, Rejection, Reply,
 };
 
+use crate::data_store::User;
+use crate::data_store::Users;
 use crate::{
     configuration::Args,
     data_converter::{self, DataResult},
@@ -38,19 +41,11 @@ pub struct RegisterResponse {
     url: String,
 }
 
-#[derive(Clone)]
-pub struct Client {
-    pub user_id: usize,
-    pub topics: Vec<String>,
-    pub sender: Option<mpsc::UnboundedSender<Message>>,
-}
-
 type Result<T> = std::result::Result<T, Rejection>;
-type Clients = Arc<Mutex<HashMap<String, Client>>>;
 
 type Org = String;
 
-pub async fn register_handler(body: RegisterRequest, clients: Clients) -> Result<impl Reply> {
+pub async fn register_handler(body: RegisterRequest, clients: Users) -> Result<impl Reply> {
     let user_id = body.user_id;
     let uuid = Uuid::new_v4().simple().to_string();
 
@@ -60,18 +55,20 @@ pub async fn register_handler(body: RegisterRequest, clients: Clients) -> Result
     }))
 }
 
-async fn register_client(id: String, user_id: usize, clients: Clients) {
+async fn register_client(id: String, user_id: usize, clients: Users) {
     clients.lock().await.insert(
         id,
-        Client {
+        User {
             user_id,
-            topics: vec![String::from("cats")],
+            room: None,
+            name: None,
+            image_url: None,
             sender: None,
         },
     );
 }
 
-pub async fn unregister_handler(id: String, clients: Clients) -> Result<impl Reply> {
+pub async fn unregister_handler(id: String, clients: Users) -> Result<impl Reply> {
     clients.lock().await.remove(&id);
     Ok(StatusCode::OK)
 }
@@ -79,48 +76,51 @@ pub async fn unregister_handler(id: String, clients: Clients) -> Result<impl Rep
 pub async fn client_connection(
     ws: WebSocket,
     id: String,
-    clients: Clients,
-    mut client: Client,
+    users: Users,
+    mut user: User,
     data_store: DataStore,
     org: Org,
 ) {
-    let (mut client_ws_sender, mut client_ws_rcv) = ws.split();
-    let (client_sender, mut client_rcv): (UnboundedSender<Message>, UnboundedReceiver<Message>) =
+    let (mut user_ws_tx, mut user_ws_rx) = ws.split();
+    let (client_tx, client_rx): (UnboundedSender<Message>, UnboundedReceiver<Message>) =
         mpsc::unbounded_channel();
+    let mut client_rx = UnboundedReceiverStream::new(client_rx);
 
     tokio::task::spawn(async move {
-        while let Some(c) = &client_rcv.recv().await {
+        while let Some(c) = client_rx.next().await {
             //client_ws_sender.reunite
-            match client_ws_sender.send(c.to_owned()).await {
-                Ok(_) => {}
-                Err(_) => log::error!("Unable to send message to client"),
-            }
+            user_ws_tx
+                .send(c.to_owned())
+                .unwrap_or_else(|e| {
+                    log::error!("Unable to send message to client error: {e}");
+                })
+                .await
         }
     });
 
-    client.sender = Some(client_sender);
-    clients.lock().await.insert(id.clone(), client);
+    user.sender = Some(client_tx);
+    users.lock().await.insert(id.clone(), user);
     log::info!("The client {id} connected");
 
-    while let Some(result) = client_ws_rcv.next().await {
+    while let Some(result) = user_ws_rx.next().await {
         let msg = match result {
             Ok(msg) => msg,
             Err(e) => {
-                log::error!("error receiving ws message for id: {}): {}", id.clone(), e);
+                log::error!("error receiving ws message for id: {id}): {e}");
                 break;
             }
         };
-        client_msg(&id, msg, &clients, &data_store, &org).await;
+        client_msg(&id, msg, &users, &data_store, &org).await;
     }
 
-    clients.lock().await.remove(&id);
+    users.lock().await.remove(&id);
     log::info!("The client: {id} disconnected");
 }
 
 pub async fn ws_handler(
     ws: warp::ws::Ws,
     id: String,
-    clients: Clients,
+    clients: Users,
     data_store: DataStore,
     org: Org,
 ) -> Result<impl Reply> {
@@ -139,8 +139,8 @@ pub async fn ws_handler(
     }
 }
 
-fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
-    warp::any().map(move || clients.clone())
+fn with_clients(users: Users) -> impl Filter<Extract = (Users,), Error = Infallible> + Clone {
+    warp::any().map(move || users.clone())
 }
 
 fn with_org(org: Org) -> impl Filter<Extract = (Org,), Error = Infallible> + Clone {
@@ -154,39 +154,40 @@ fn with_data_store(
 }
 
 pub async fn start(args: &Args, data_store: &Arc<Mutex<Store>>) {
-    let clients: Clients = Arc::new(Mutex::new(HashMap::new()));
+    let users: Users = Arc::new(Mutex::new(HashMap::new()));
     let org = args.get_origin().unwrap_or_default();
 
     let register = warp::path("register");
     let register_routes = register
         .and(warp::post())
         .and(warp::body::json())
-        .and(with_clients(clients.clone()))
+        .and(with_clients(users.clone()))
         .and_then(register_handler)
         .or(register
             .and(warp::delete())
             .and(warp::path::param())
-            .and(with_clients(clients.clone()))
+            .and(with_clients(users.clone()))
             .and_then(unregister_handler));
 
     let ws_route = warp::path("ws")
         .and(warp::ws())
         .and(warp::path::param())
-        .and(with_clients(clients.clone()))
+        .and(with_clients(users.clone()))
         .and(with_data_store(data_store.clone()))
         .and(with_org(org.clone()))
         .and_then(ws_handler);
 
-    let routes = register_routes
-        .or(ws_route);
+    let routes = register_routes.or(ws_route);
 
-    let api_routes = warp::path("api").and(routes).with(warp::cors().allow_any_origin());
+    let api_routes = warp::path("api")
+        .and(routes)
+        .with(warp::cors().allow_any_origin());
 
     log::info!("Webserver will start");
     warp::serve(api_routes).run(([127, 0, 0, 1], 8080)).await;
 }
 
-async fn client_msg(id: &str, msg: Message, clients: &Clients, store: &DataStore, org: &Org) {
+async fn client_msg(id: &str, msg: Message, users: &Users, store: &DataStore, org: &Org) {
     match data_converter::data_parser(msg.into_bytes(), org.as_str()) {
         Ok(data) => {
             let result = data_event_handler(data, &id, store, org.as_str()).await;
@@ -195,7 +196,7 @@ async fn client_msg(id: &str, msg: Message, clients: &Clients, store: &DataStore
                 Some(result) => {
                     let result = Message::binary(result);
 
-                    if let Some(client) = clients.lock().await.get_mut(id) {
+                    if let Some(client) = users.lock().await.get_mut(id) {
                         match client.sender.as_ref().unwrap().send(result) {
                             Ok(_) => {}
                             Err(_) => log::error!("Unable to send message"),
@@ -231,20 +232,21 @@ async fn data_event_handler(
         DataResult::CreateRoomRequest(data) => {
             log::debug!("{device_id}: {data:?}");
 
+            let password = match data.get_password().is_empty() {
+              true => None,
+              false => Some(String::from(data.get_password()))
+            };
+
             let code = generate(6, "ABCDEFGHIJKLMNPRSTUVWXYZ123456789");
-            let mut store = store.lock().await;
-            store.rooms.insert(
+            let room = Room::new(
                 code.clone(),
-                Room {
-                    size: data.get_players(),
-                    max_size: i32::MAX,
-                    status: crate::data_store::RoomState::LOBBY,
-                    rounds: data.get_rounds(),
-                    users: vec![],
-                    keywords: vec![],
-                    password: None, //password: data.get_password(),
-                },
+                data.get_players(),
+                data.get_rounds(),
+                password
             );
+
+            let mut store = store.lock().await;
+            store.rooms.insert(code.clone(), room);
 
             let mut response = CreateRoomResponse::new();
             response.set_code(code);
@@ -256,7 +258,6 @@ async fn data_event_handler(
                 &origin,
             ));
         }
-        _ => log::info!("Unknown data in data_event_handler"),
     };
 
     result

@@ -1,7 +1,7 @@
-use std::{collections::HashMap, sync::{Arc}};
+use std::{collections::HashMap, sync::Arc};
 
-use tokio::sync::Mutex;
-
+use tokio::sync::{mpsc, Mutex};
+use warp::ws::Message;
 
 pub type DataStore = Arc<Mutex<Store>>;
 
@@ -17,6 +17,7 @@ impl Store {
 
 #[derive(Debug)]
 pub struct Room {
+    pub code: String,
     pub status: RoomState,
     pub size: i32,
     pub max_size: i32,
@@ -33,6 +34,19 @@ pub enum RoomState {
 }
 
 impl Room {
+    pub fn new(code: String, size: i32, rounds: i32, password: Option<String>) -> Self {
+        Self {
+            code,
+            size,
+            max_size: i32::MAX,
+            status: crate::data_store::RoomState::LOBBY,
+            rounds,
+            users: vec![],
+            keywords: vec![],
+            password,
+        }
+    }
+
     pub fn has_password(&self) -> bool {
         self.password.is_some()
     }
@@ -46,9 +60,13 @@ impl Room {
     }
 }
 
-#[derive(Debug)]
+pub type Users = Arc<Mutex<HashMap<String, User>>>;
+
+#[derive(Debug, Clone)]
 pub struct User {
-    id: String,
-    name: Option<String>,
-    image_url: Option<String>
+    pub user_id: usize,
+    pub room: Option<usize>,
+    pub name: Option<String>,
+    pub image_url: Option<String>,
+    pub sender: Option<mpsc::UnboundedSender<Message>>,
 }
