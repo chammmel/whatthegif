@@ -1,5 +1,4 @@
 <script context="module" lang="ts">
-  import { browser } from '$app/env';
   export async function load(ctx: LoadInput): Promise<LoadOutput> {
     let id = ctx.page.params.id;
     return { props: { id } };
@@ -9,15 +8,11 @@
 <script lang="ts">
   import Logo from '$lib/header/Logo.svelte';
   import type { LoadInput, LoadOutput } from '@sveltejs/kit';
-  import { createEventDispatcher } from 'svelte';
 
   export let id: string;
   export let lobby: boolean = false;
 
-  const dispatch = createEventDispatcher();
-
   function copyId() {
-    dispatch('click');
     navigator.clipboard.writeText(window.location.href);
     document.getElementById('copied').style.display = 'inline-block';
     setTimeout(() => {
