@@ -1,6 +1,6 @@
 <script context="module" lang="ts">
   export async function load(ctx: LoadInput): Promise<LoadOutput> {
-    let id = ctx.page.params.id;
+    let id = ctx.params.id;
     return { props: { id } };
   }
 </script>
