@@ -34,11 +34,7 @@
   onDestroy(unsubscribe);
 
   onMount(() => {
-
-    setTimeout(() =>{
-      console.log(id);
-      backend.requestRoomInfo(id);
-    }, 5000);
+    backend.requestRoomInfo(id);
   });
 
   function copyId() {
