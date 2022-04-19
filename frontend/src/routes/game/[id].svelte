@@ -16,7 +16,7 @@
   export let id: string;
   export let lobby: boolean = true;
   export let roomInfoResponse: RoomInfoResponse = {
-    code: "123",
+    code: '123',
     playerCount: -1,
     players: -1,
     rounds: 0,
@@ -87,11 +87,11 @@
 
         <div class="item">
           <h3>Rounds</h3>
-          <h3>#{roomInfoResponse.rounds}</h3>
+          <h3>{roomInfoResponse.rounds}</h3>
         </div>
         <div class="item">
           <h3>Max players</h3>
-          <h3>#{roomInfoResponse.players}</h3>
+          <h3>{roomInfoResponse.players}</h3>
         </div>
 
         <div class="header">
@@ -102,7 +102,7 @@
       <div class="box">
         <div class="header">
           <h2>Players</h2>
-          <h2>#{roomInfoResponse.playerCount}/#{roomInfoResponse.players}</h2>
+          <h2>{roomInfoResponse.playerCount}/{roomInfoResponse.players}</h2>
         </div>
 
         <div class="players">
