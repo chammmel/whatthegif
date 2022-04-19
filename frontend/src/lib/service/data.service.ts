@@ -12,6 +12,7 @@ import {
 
 export class DataService {
   private socket: WebSocket = undefined;
+  private messageQueue: Array<{b: Uint8Array}> = [];
   private clientId: number;
 
   public disconnectFromServer = () => {
@@ -44,6 +45,13 @@ export class DataService {
         if (this.socket !== undefined) {
           this.socket.addEventListener('open', (event) => {
             console.log('Connected to websocket');
+
+            for (let i = 0; i < this.messageQueue.length; i++) {
+              const element = this.messageQueue.pop();
+
+              this.socket.send(element.b);
+            }
+
           });
           this.socket.addEventListener('message', async (event) => {
             const buffer = await this.toUint8Array(event.data);
@@ -168,7 +176,7 @@ export class DataService {
     ).finish();
 
     if (this.socket === undefined) {
-      console.error('Unable to send data throw websocket');
+      this.messageQueue.push({b: bits});
     } else {
       if (this.socket.readyState <= 1) {
         this.socket.send(bits);
