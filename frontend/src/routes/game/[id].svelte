@@ -8,9 +8,34 @@
 <script lang="ts">
   import Logo from '$lib/header/Logo.svelte';
   import type { LoadInput, LoadOutput } from '@sveltejs/kit';
+  import backend from '$lib/stores/backend';
+  import { onMount, onDestroy } from 'svelte';
+  import { MessageType } from '$lib/service/data.service';
+  import { RoomInfoError, type RoomInfoResponse } from '$lib/generated/protocol/communication';
 
   export let id: string;
-  export let lobby: boolean = false;
+  export let lobby: boolean = true;
+  export let roomInfoResponse: RoomInfoResponse = {
+    code: '123',
+    playerCount: -1,
+    players: -1,
+    rounds: 0,
+    keywords: [],
+    error: RoomInfoError.UNRECOGNIZED
+  };
+
+  const unsubscribe = backend.subscribe((newMessage) => {
+    if (newMessage) {
+      if (newMessage.messageType === MessageType.RoomInfoResponse) {
+        roomInfoResponse = newMessage.data as RoomInfoResponse;
+      }
+    }
+  });
+  onDestroy(unsubscribe);
+
+  onMount(() => {
+    backend.requestRoomInfo(id);
+  });
 
   function copyId() {
     navigator.clipboard.writeText(window.location.href);
@@ -62,11 +87,11 @@
 
         <div class="item">
           <h3>Rounds</h3>
-          <h3>10</h3>
+          <h3>{roomInfoResponse.rounds}</h3>
         </div>
         <div class="item">
           <h3>Max players</h3>
-          <h3>8</h3>
+          <h3>{roomInfoResponse.players}</h3>
         </div>
 
         <div class="header">
@@ -77,7 +102,7 @@
       <div class="box">
         <div class="header">
           <h2>Players</h2>
-          <h2>2/8</h2>
+          <h2>{roomInfoResponse.playerCount}/{roomInfoResponse.players}</h2>
         </div>
 
         <div class="players">

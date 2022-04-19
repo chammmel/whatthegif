@@ -9,6 +9,10 @@
   export let max: number = undefined;
   export let label: string = undefined;
   let borderRadius: string = border == 'square' ? '10px' : '32px';
+
+  const handleInput = (e) => {
+    value = type.match(/^(number|range)$/) ? +e.target.value : e.target.value;
+  };
 </script>
 
 <div style="width: {width}; height: {height};">
@@ -17,7 +21,15 @@
     <label>{label}</label>
   {/if}
   <div class="input">
-    <input style="border-radius: {borderRadius};" {type} {placeholder} {value} {min} {max} />
+    <input
+      style="border-radius: {borderRadius};"
+      {type}
+      {placeholder}
+      {min}
+      {max}
+      {value}
+      on:input={handleInput}
+    />
   </div>
 </div>
 

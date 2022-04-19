@@ -1,11 +1,14 @@
 import { goto } from '$app/navigation';
-import { JoinError, type PreJoinResponse } from '$lib/generated/protocol/communication';
+import { CreateRoomError, CreateRoomResponse, JoinError, type PreJoinResponse } from '$lib/generated/protocol/communication';
 import { MessageType, type NewMessage } from './data.service';
 
 export const handle = (message: NewMessage) => {
   switch (message.messageType) {
     case MessageType.PreJoinResponse:
       handlePreJoinResponse(message.data as PreJoinResponse)
+      break;
+    case MessageType.CreateRoomResponse:
+      handleCreateRoomResponse(message.data as CreateRoomResponse)
       break;
   }
 };
@@ -34,3 +37,10 @@ const handlePreJoinResponse = (preJoinResponse: PreJoinResponse) => {
       break;
   }
 }
+
+function handleCreateRoomResponse(createRoomResponse: CreateRoomResponse) {
+  if (createRoomResponse.error == CreateRoomError.DONE) {
+    goto(`/game/${createRoomResponse.code}`);
+  }
+}
+

@@ -60,7 +60,7 @@ message CreateRoomRequest {
 
 message CreateRoomResponse {
   required string code = 1;
-  required CreateRoomError errors = 2;
+  required CreateRoomError error = 2;
 }
 
 enum CreateRoomError {
@@ -68,3 +68,20 @@ enum CreateRoomError {
 }
 
 
+message RoomInfoRequest {
+  required string code = 1;
+}
+
+message RoomInfoResponse {
+  optional string code = 1;
+  optional int32 player_count = 2;
+  optional int32 players = 3;
+  optional int32 rounds = 4;
+  repeated string keywords = 5;
+  required RoomInfoError error = 6;
+}
+
+enum RoomInfoError {
+  ROOM_NOT_FOUND = 0;
+  OK = 1;
+}

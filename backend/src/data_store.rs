@@ -37,8 +37,8 @@ impl Room {
     pub fn new(code: String, size: i32, rounds: i32, password: Option<String>) -> Self {
         Self {
             code,
-            size,
-            max_size: i32::MAX,
+            size: 0,
+            max_size: size,
             status: crate::data_store::RoomState::LOBBY,
             rounds,
             users: vec![],

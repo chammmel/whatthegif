@@ -4,7 +4,10 @@
   import { onMount } from 'svelte';
   import '../app.css';
 
-  onMount(() => backend.listen());
+  onMount(() => {
+    backend.connect();
+    backend.listen();
+  });
 </script>
 
 <slot />
