@@ -24,15 +24,16 @@
     error: RoomInfoError.UNRECOGNIZED
   };
 
+  const unsubscribe = backend.subscribe((newMessage) => {
+    if (newMessage) {
+      if (newMessage.messageType === MessageType.RoomInfoResponse) {
+        roomInfoResponse = newMessage.data as RoomInfoResponse;
+      }
+    }
+  });
+  onDestroy(unsubscribe);
+
   onMount(() => {
-    /*const unsubscribe = backend.subscribe((newMessage) => {*/
-      /*if (newMessage) {*/
-        /*if (newMessage.messageType === MessageType.RoomInfoResponse) {*/
-          /*this.roomInfoResponse = newMessage.data;*/
-        /*}*/
-      /*}*/
-    /*});*/
-    /*onDestroy(unsubscribe);*/
 
     setTimeout(() =>{
       console.log(id);
