@@ -89,6 +89,7 @@
             <span>CokeJoke</span>
           </div>
         </div>
+        <button class="start-game">Start</button>
       </div>
     </div>
   </section>
@@ -286,7 +287,7 @@
   .players {
     margin-top: 15px;
     overflow-y: auto;
-    height: 550px;
+    height: 480px;
   }
   .player {
     display: flex;
@@ -302,6 +303,24 @@
     letter-spacing: 2px;
     font-size: 20px;
     margin-left: 15px;
+  }
+  .start-game {
+    cursor: pointer;
+    letter-spacing: 4px;
+    margin-top: 20px;
+    height: 50px;
+    width: 100%;
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    text-transform: uppercase;
+    font-size: 20px;
+    transition: 0.5s;
+  }
+  .start-game:hover {
+    background: var(--primary-color);
+    color: var(--background-secondary);
+    transition: 0.5s;
   }
 
   h2 {
