@@ -5,7 +5,9 @@ import {
   JoinResponse,
   Message,
   PreJoinRequest,
-  PreJoinResponse
+  PreJoinResponse,
+  RoomInfoRequest,
+  RoomInfoResponse
 } from '$lib/generated/protocol/communication';
 
 export class DataService {
@@ -60,6 +62,16 @@ export class DataService {
       });
     }
     return this;
+  };
+
+  public requestRoomInfo = (code: string) => {
+    const data = RoomInfoRequest.encode(
+      RoomInfoRequest.fromJSON({
+        code
+      })
+    ).finish();
+
+    this.sendMessage('RoomInfoRequest', data);
   };
 
   public preJoinRequest = (room: string) => {
@@ -118,7 +130,7 @@ export class DataService {
 
   private dataParser = (
     message: Message
-  ): Promise<PreJoinResponse | JoinResponse | Content | CreateRoomResponse> =>
+  ): Promise<PreJoinResponse | JoinResponse | Content | CreateRoomResponse | RoomInfoResponse> =>
     new Promise((resolve, reject) => {
       const buffer = message.payload.value;
       switch (message.payload.typeUrl as MessageType) {
@@ -133,6 +145,9 @@ export class DataService {
           break;
         case MessageType.CreateRoomResponse:
           resolve(CreateRoomResponse.decode(buffer));
+          break;
+        case MessageType.RoomInfoResponse:
+          resolve(RoomInfoResponse.decode(buffer));
           break;
 
         default:
@@ -166,11 +181,12 @@ export enum MessageType {
   PreJoinResponse = 'PreJoinResponse',
   JoinResponse = 'JoinResponse',
   Content = 'Content',
-  CreateRoomResponse = 'CreateRoomResponse'
+  CreateRoomResponse = 'CreateRoomResponse',
+  RoomInfoResponse = 'RoomInfoResponse'
 }
 
 export interface NewMessage {
-  data: PreJoinResponse | JoinResponse | Content | CreateRoomResponse;
+  data: PreJoinResponse | JoinResponse | Content | CreateRoomResponse | RoomInfoResponse;
   messageType: MessageType;
 }
 

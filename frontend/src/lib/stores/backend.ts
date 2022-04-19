@@ -5,7 +5,7 @@ import { writable } from 'svelte/store';
 
 export const messages = writable<Array<NewMessage>>([]);
 
-export const latestMessage = writable<NewMessage>();
+const latestMessage = writable<NewMessage>();
 
 const addMessage = (newMessage: NewMessage) => {
   messages.update((mgs) => [...mgs, newMessage]);
@@ -15,7 +15,8 @@ const addMessage = (newMessage: NewMessage) => {
 const dataService = new DataService();
 
 export default {
-  subscribe: messages.subscribe,
+  subscribe: latestMessage.subscribe,
+  latestMessage,
   listen: () => {
     latestMessage.subscribe((m) => {
       if (m) {
@@ -26,6 +27,7 @@ export default {
   connect: () => {
     dataService.connectToServer(addMessage);
   },
+  requestRoomInfo: dataService.requestRoomInfo,
   preJoinRequest: dataService.preJoinRequest,
   createRoomRequest: dataService.createRoomRequest
 };
