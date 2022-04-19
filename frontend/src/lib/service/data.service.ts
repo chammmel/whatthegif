@@ -5,11 +5,14 @@ import {
   JoinResponse,
   Message,
   PreJoinRequest,
-  PreJoinResponse
+  PreJoinResponse,
+  RoomInfoRequest,
+  RoomInfoResponse
 } from '$lib/generated/protocol/communication';
 
 export class DataService {
   private socket: WebSocket = undefined;
+  private messageQueue: Array<{b: Uint8Array}> = [];
   private clientId: number;
 
   public disconnectFromServer = () => {
@@ -42,6 +45,13 @@ export class DataService {
         if (this.socket !== undefined) {
           this.socket.addEventListener('open', (event) => {
             console.log('Connected to websocket');
+
+            for (let i = 0; i < this.messageQueue.length; i++) {
+              const element = this.messageQueue.pop();
+
+              this.socket.send(element.b);
+            }
+
           });
           this.socket.addEventListener('message', async (event) => {
             const buffer = await this.toUint8Array(event.data);
@@ -60,6 +70,16 @@ export class DataService {
       });
     }
     return this;
+  };
+
+  public requestRoomInfo = (code: string) => {
+    const data = RoomInfoRequest.encode(
+      RoomInfoRequest.fromJSON({
+        code
+      })
+    ).finish();
+
+    this.sendMessage('RoomInfoRequest', data);
   };
 
   public preJoinRequest = (room: string) => {
@@ -118,7 +138,7 @@ export class DataService {
 
   private dataParser = (
     message: Message
-  ): Promise<PreJoinResponse | JoinResponse | Content | CreateRoomResponse> =>
+  ): Promise<PreJoinResponse | JoinResponse | Content | CreateRoomResponse | RoomInfoResponse> =>
     new Promise((resolve, reject) => {
       const buffer = message.payload.value;
       switch (message.payload.typeUrl as MessageType) {
@@ -133,6 +153,9 @@ export class DataService {
           break;
         case MessageType.CreateRoomResponse:
           resolve(CreateRoomResponse.decode(buffer));
+          break;
+        case MessageType.RoomInfoResponse:
+          resolve(RoomInfoResponse.decode(buffer));
           break;
 
         default:
@@ -153,7 +176,7 @@ export class DataService {
     ).finish();
 
     if (this.socket === undefined) {
-      console.error('Unable to send data throw websocket');
+      this.messageQueue.push({b: bits});
     } else {
       if (this.socket.readyState <= 1) {
         this.socket.send(bits);
@@ -166,11 +189,12 @@ export enum MessageType {
   PreJoinResponse = 'PreJoinResponse',
   JoinResponse = 'JoinResponse',
   Content = 'Content',
-  CreateRoomResponse = 'CreateRoomResponse'
+  CreateRoomResponse = 'CreateRoomResponse',
+  RoomInfoResponse = 'RoomInfoResponse'
 }
 
 export interface NewMessage {
-  data: PreJoinResponse | JoinResponse | Content | CreateRoomResponse;
+  data: PreJoinResponse | JoinResponse | Content | CreateRoomResponse | RoomInfoResponse;
   messageType: MessageType;
 }
 

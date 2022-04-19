@@ -7,8 +7,6 @@
 
   let room = '';
 
-  onMount(() => backend.connect());
-
   function join() {
     if (room !== '') {
       backend.preJoinRequest(room);
