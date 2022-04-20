@@ -35,6 +35,7 @@
     font-size: 20px;
     font-weight: bold;
     text-transform: uppercase;
+    border-radius: var(--roundy);
   }
   button:hover {
     background-blend-mode: multiply;

@@ -27,8 +27,8 @@
     width: 100%;
     height: auto;
     color: var(--primary-color);
-    border-radius: var(--roundy);
-    background: var(--background-color);
+    background: var(--background-secondary);
+    border-radius: 10px;
     filter: brightness(var(--hover-brightness));
     box-shadow: var(--box-shadow);
   }
