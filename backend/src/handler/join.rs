@@ -1,9 +1,11 @@
+use protobuf::RepeatedField;
+
 use crate::{
     data_converter,
     data_store::DataStore,
-    generated::communication::{
+    generated::{communication::{
         JoinError, JoinRequest, JoinResponse, PreJoinRequest, PreJoinResponse,
-    },
+    }, self},
 };
 
 pub async fn pre_join_request(
@@ -53,39 +55,52 @@ pub async fn join_request(
 ) -> Option<Vec<u8>> {
     log::debug!("{device_id}: {data:?}");
 
-    let mut reponse = JoinResponse::new();
+    let mut response = JoinResponse::new();
 
     let store = store.lock().await;
 
     let room = store.get_room(data.get_room());
     match room {
         Some(room) => {
-            let mut join_error = JoinError::FINE;
             if room.is_full() {
-                join_error = JoinError::ROOM_FULL;
+              response.set_error(JoinError::ROOM_FULL);
             } else {
                 if room.has_password() {
                     if !data.has_password() {
-                        reponse.set_error(JoinError::REQUIRES_PASSWORD);
+                        response.set_error(JoinError::REQUIRES_PASSWORD);
                     } else {
                         if data.get_password() == room.password.as_ref().unwrap() {
-                            reponse.set_error(JoinError::FINE);
+                            response.set_error(JoinError::FINE);
 
                             //TODO: set content
                         }
                     }
+                } else {
+                    response.set_error(JoinError::FINE);
                 }
             }
 
-            reponse.set_error(join_error);
+            if response.get_error() == JoinError::FINE {
+              let users = room.users.clone().iter().map(|u| {
+                let u = u.to_owned();
+                let mut user = generated::communication::User::new();
+                user.set_uuid(u.user_id.to_string());
+                user.set_name(u.name.unwrap_or_default());
+                user.set_image_url(u.image_url.unwrap_or(String::from("https://i.giphy.com/media/gvnBUe6e3ZRxC/giphy.webp")));
+
+                user
+              }).collect();
+              response.set_user(RepeatedField::from_vec(users))
+            }
+
         }
         None => {
-            reponse.set_error(JoinError::NOT_FOUND);
+            response.set_error(JoinError::NOT_FOUND);
         }
     }
 
     Some(data_converter::data_writer(
-        ::protobuf::Message::write_to_bytes(&reponse).unwrap(),
+        ::protobuf::Message::write_to_bytes(&response).unwrap(),
         "JoinResponse",
         &origin,
     ))
