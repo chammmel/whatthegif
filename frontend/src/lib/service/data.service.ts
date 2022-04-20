@@ -2,6 +2,7 @@ import {
   Content,
   CreateRoomRequest,
   CreateRoomResponse,
+  JoinRequest,
   JoinResponse,
   Message,
   PreJoinRequest,
@@ -90,6 +91,18 @@ export class DataService {
     ).finish();
 
     this.sendMessage('PreJoinRequest', data);
+  };
+
+  public joinRequest = (room: string, username: string, password?: string) => {
+    const data = JoinRequest.encode(
+      JoinRequest.fromJSON({
+        room,
+        username,
+        password
+      })
+    ).finish();
+
+    this.sendMessage('JoinRequest', data);
   };
 
   public createRoomRequest = (

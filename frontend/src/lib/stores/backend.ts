@@ -29,5 +29,6 @@ export default {
   },
   requestRoomInfo: dataService.requestRoomInfo,
   preJoinRequest: dataService.preJoinRequest,
+  joinRequest: dataService.joinRequest,
   createRoomRequest: dataService.createRoomRequest
 };

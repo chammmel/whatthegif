@@ -12,7 +12,8 @@ message PreJoinRequest {
 }
 
 message PreJoinResponse {
-  required JoinError error = 1;
+  required string code = 1;
+  required JoinError error = 2;
 }
 
 message JoinRequest {
