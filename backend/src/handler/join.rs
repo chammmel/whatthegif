@@ -33,6 +33,7 @@ pub async fn pre_join_request(
                 join_error = JoinError::REQUIRES_PASSWORD;
             }
 
+            reponse.set_code(room_id.to_string());
             reponse.set_error(join_error);
         }
         None => {
