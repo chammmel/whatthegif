@@ -7,6 +7,7 @@
   import JoinInput from '$lib/input/JoinInput.svelte';
   import Button from '$lib/input/Button.svelte';
   import Footer from '$lib/footer/Footer.svelte';
+  import PopUpHandler from '$lib/popup/PopUpHandler.svelte';
 </script>
 
 <svelte:head>
@@ -15,6 +16,7 @@
 
 <main>
   <section>
+    <PopUpHandler />
     <div class="logo">
       <AnimatedLogo />
     </div>
