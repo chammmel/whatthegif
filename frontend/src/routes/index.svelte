@@ -16,7 +16,6 @@
 
 <main>
   <section>
-    <PopUpHandler />
     <div class="logo">
       <AnimatedLogo />
     </div>

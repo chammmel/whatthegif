@@ -27,6 +27,7 @@ const handlePreJoinResponse = (preJoinResponse: PreJoinResponse) => {
     case JoinError.REQUIRES_PASSWORD:
     case JoinError.WRONG_PASSWORD:
     case JoinError.UNALLOWED_USERNAME:
+      goto(`/game/${preJoinResponse.code}`);
       popup.currentPopUp.set(PopUpType.JOIN);
       break;
     case JoinError.ROOM_FULL:
@@ -34,7 +35,7 @@ const handlePreJoinResponse = (preJoinResponse: PreJoinResponse) => {
       break;
 
     case JoinError.FINE:
-      goto('/game');
+      goto(`/game/${preJoinResponse.code}`);
       break;
 
     default:

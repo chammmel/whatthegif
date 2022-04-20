@@ -12,6 +12,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { MessageType } from '$lib/service/data.service';
   import { RoomInfoError, type RoomInfoResponse } from '$lib/generated/protocol/communication';
+  import PopUpHandler from '$lib/popup/PopUpHandler.svelte';
 
   export let id: string;
   export let lobby: boolean = true;
