@@ -4,9 +4,9 @@
 
 <script lang="ts">
   import Input from '$lib/input/Input.svelte';
-  import Button from '$lib/input/Button.svelte';
   import Logo from '$lib/header/Logo.svelte';
   import backend from '$lib/stores/backend';
+  import GifButton from '$lib/input/GifButton.svelte';
 
   let players = 8;
   let rounds = 10;
@@ -52,7 +52,7 @@
     <div class="spacer" />
     <Input placeholder="Gif Keywords" border="roundy" width="100%" />
     <p>Seperate keywords by comma</p>
-    <Button on:click={create} width={'100%'} background="var(--green-color)">Create</Button>
+    <GifButton on:click={create} width={'100%'} background="var(--green-color)">Create</GifButton>
   </section>
 </main>
 

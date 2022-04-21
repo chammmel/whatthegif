@@ -5,9 +5,8 @@
 <script lang="ts">
   import AnimatedLogo from '$lib/header/AnimatedLogo.svelte';
   import JoinInput from '$lib/input/JoinInput.svelte';
-  import Button from '$lib/input/Button.svelte';
   import Footer from '$lib/footer/Footer.svelte';
-  import PopUpHandler from '$lib/popup/PopUpHandler.svelte';
+  import GifButton, { GifType } from '$lib/input/GifButton.svelte';
 </script>
 
 <svelte:head>
@@ -21,7 +20,9 @@
     </div>
     <JoinInput width={'100%'} />
     <span>OR</span>
-    <Button href="/create" width={'100%'} background="var(--green-color)">Create a lobby</Button>
+    <GifButton type={GifType.DOOR} href="/create" width={'100%'} background="var(--green-color)"
+      >Create a lobby</GifButton
+    >
   </section>
   <Footer />
 </main>
