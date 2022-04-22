@@ -3,11 +3,11 @@ use protobuf::well_known_types::Any;
 use crate::generated::communication::{JoinRequest, Message, PreJoinRequest, CreateRoomRequest, RoomInfoRequest};
 
 #[derive(Debug)]
-pub enum DataResult {
-    JoinRequest(JoinRequest),
-    PreJoinRequest(PreJoinRequest),
-    CreateRoomRequest(CreateRoomRequest),
-    RoomInfoRequest(RoomInfoRequest)
+pub enum DataResultRequest {
+    Join(JoinRequest),
+    PreJoin(PreJoinRequest),
+    CreateRoom(CreateRoomRequest),
+    RoomInfo(RoomInfoRequest)
 }
 
 fn get_message(bytes: Vec<u8>) -> Option<Message> {
@@ -30,7 +30,7 @@ pub fn data_writer(bytes: Vec<u8>, local_str: &str, local_origin: &str) -> Vec<u
     ::protobuf::Message::write_to_bytes(&message).unwrap()
 }
 
-pub fn data_parser(bytes: Vec<u8>, local_origin: &str) -> Result<DataResult, &'static str> {
+pub fn data_parser(bytes: Vec<u8>, local_origin: &str) -> Result<DataResultRequest, &'static str> {
     let message = get_message(bytes);
 
     match message {
@@ -45,22 +45,22 @@ pub fn data_parser(bytes: Vec<u8>, local_origin: &str) -> Result<DataResult, &'s
                 "PreJoinRequest" => {
                     let out: PreJoinRequest =
                         ::protobuf::Message::parse_from_bytes(&payload.value).unwrap();
-                    Ok(DataResult::PreJoinRequest(out))
+                    Ok(DataResultRequest::PreJoin(out))
                 }
                 "JoinRequest" => {
                     let out: JoinRequest =
                         ::protobuf::Message::parse_from_bytes(&payload.value).unwrap();
-                    Ok(DataResult::JoinRequest(out))
+                    Ok(DataResultRequest::Join(out))
                 }
                 "CreateRoomRequest" => {
                     let out: CreateRoomRequest =
                         ::protobuf::Message::parse_from_bytes(&payload.value).unwrap();
-                    Ok(DataResult::CreateRoomRequest(out))
+                    Ok(DataResultRequest::CreateRoom(out))
                 }
                 "RoomInfoRequest" => {
                     let out: RoomInfoRequest =
                         ::protobuf::Message::parse_from_bytes(&payload.value).unwrap();
-                    Ok(DataResult::RoomInfoRequest(out))
+                    Ok(DataResultRequest::RoomInfo(out))
                 }
                 _ => Err("Unknown datatype: It has to be registered"),
             }
