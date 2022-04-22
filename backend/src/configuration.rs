@@ -15,7 +15,7 @@ pub struct Args {
 
 impl Args {
     pub fn get_redis(&self) -> Option<String> {
-        if self.redis == "" {
+        if self.redis.is_empty() {
             None
         } else {
             Some(self.redis.to_string())

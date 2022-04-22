@@ -29,8 +29,8 @@ pub struct Room {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RoomState {
-    LOBBY,
-    RUNNING,
+    Lobby,
+    Running,
 }
 
 impl Room {
@@ -39,7 +39,7 @@ impl Room {
             code,
             size: 0,
             max_size: size,
-            status: crate::data_store::RoomState::LOBBY,
+            status: crate::data_store::RoomState::Lobby,
             rounds,
             users: vec![],
             keywords: vec![],
@@ -56,7 +56,7 @@ impl Room {
     }
 
     pub fn is_running(&self) -> bool {
-        self.status == RoomState::RUNNING
+        self.status == RoomState::Running
     }
 }
 

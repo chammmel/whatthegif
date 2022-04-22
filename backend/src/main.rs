@@ -3,7 +3,7 @@ use tokio::sync::{mpsc, Mutex};
 
 use clap::Parser;
 use configuration::Args;
-use data_converter::DataResult;
+use data_converter::DataResultRequest;
 use data_store::Store;
 
 mod configuration;
@@ -11,6 +11,7 @@ mod data_converter;
 mod data_store;
 mod generated;
 mod pubsub;
+mod web_server;
 mod router;
 mod handler;
 
@@ -28,9 +29,9 @@ async fn main() {
     let data_store = Mutex::new(data_store);
     let data_store = Arc::new(data_store);
 
-    let (internal_tx, internal_rx) = mpsc::channel::<DataResult>(100);
-    let (external_tx, external_rx) = mpsc::channel::<DataResult>(100);
+    let (internal_tx, internal_rx) = mpsc::channel::<DataResultRequest>(100);
+    let (external_tx, external_rx) = mpsc::channel::<DataResultRequest>(100);
 
     pubsub::initialize(&args, &data_store);
-    router::start(&args, &data_store).await;
+    web_server::start(&args, &data_store).await;
 }

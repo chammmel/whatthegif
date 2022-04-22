@@ -35,7 +35,7 @@ pub async fn create_room_request(
     Some(data_converter::data_writer(
         protobuf::Message::write_to_bytes(&response).unwrap(),
         "CreateRoomResponse",
-        &origin,
+        origin,
     ))
 }
 
@@ -62,6 +62,6 @@ pub async fn room_info_request(
     Some(data_converter::data_writer(
         protobuf::Message::write_to_bytes(&response).unwrap(),
         "RoomInfoResponse",
-        &origin,
+        origin,
     ))
 }
