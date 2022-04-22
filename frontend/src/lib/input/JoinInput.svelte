@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { PreJoinRequest } from '$lib/generated/protocol/communication';
-
-  import backend from '$lib/stores/backend';
-  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
 
   export let width: string = '389px';
   export let height: string = '56px';
@@ -11,7 +8,7 @@
 
   function join() {
     if (room !== '') {
-      backend.request(PreJoinRequest, 'PreJoinRequest', { room } as PreJoinRequest);
+      goto(`/game/${room}`);
     }
     room = '';
   }
