@@ -3,7 +3,11 @@
   import backend from '$lib/stores/backend';
   import { onMount, onDestroy } from 'svelte';
   import { MessageType } from '$lib/service/data.service';
-  import { RoomInfoError, type RoomInfoResponse } from '$lib/generated/protocol/communication';
+  import {
+    RoomInfoError,
+    RoomInfoRequest,
+    type RoomInfoResponse
+  } from '$lib/generated/protocol/communication';
 
   export let id: string;
   let roomInfoResponse: RoomInfoResponse = {
@@ -26,7 +30,7 @@
   onDestroy(unsubscribe);
 
   onMount(() => {
-    backend.requestRoomInfo(id);
+    backend.request(RoomInfoRequest, 'RoomInfoRequest', { code: id } as RoomInfoRequest);
   });
 
   function copyId() {

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { PreJoinRequest } from '$lib/generated/protocol/communication';
+
   import backend from '$lib/stores/backend';
   import { onMount } from 'svelte';
 
@@ -9,7 +11,7 @@
 
   function join() {
     if (room !== '') {
-      backend.preJoinRequest(room);
+      backend.request(PreJoinRequest, 'PreJoinRequest', { room } as PreJoinRequest);
     }
     room = '';
   }

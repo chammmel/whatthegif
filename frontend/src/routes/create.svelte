@@ -7,6 +7,7 @@
   import Logo from '$lib/header/Logo.svelte';
   import backend from '$lib/stores/backend';
   import GifButton from '$lib/input/GifButton.svelte';
+  import { CreateRoomRequest } from '$lib/generated/protocol/communication';
 
   let players = 8;
   let rounds = 10;
@@ -14,7 +15,12 @@
   let keywords = '';
 
   function create() {
-    backend.createRoomRequest(players, rounds, password, keywords.replace(' ', '').split(','));
+    backend.request(CreateRoomRequest, 'CreateRoomRequest', {
+      players,
+      rounds,
+      password,
+      keywords: keywords.replace(' ', '').split(',')
+    } as CreateRoomRequest);
   }
 </script>
 

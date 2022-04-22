@@ -1,19 +1,17 @@
 import {
   Content,
-  CreateRoomRequest,
   CreateRoomResponse,
-  JoinRequest,
   JoinResponse,
   Message,
-  PreJoinRequest,
   PreJoinResponse,
-  RoomInfoRequest,
   RoomInfoResponse
 } from '$lib/generated/protocol/communication';
 
+import * as communication from '$lib/generated/protocol/communication';
+
 export class DataService {
   private socket: WebSocket = undefined;
-  private messageQueue: Array<{b: Uint8Array}> = [];
+  private messageQueue: Array<{ b: Uint8Array }> = [];
   private clientId: number;
 
   public disconnectFromServer = () => {
@@ -52,7 +50,6 @@ export class DataService {
 
               this.socket.send(element.b);
             }
-
           });
           this.socket.addEventListener('message', async (event) => {
             const buffer = await this.toUint8Array(event.data);
@@ -61,7 +58,7 @@ export class DataService {
             let messageType = message.payload.typeUrl as MessageType;
             const content = await this.dataParser(message);
 
-            gotNewMessge({ data: content, messageType});
+            gotNewMessge({ data: content, messageType });
 
             console.log('Got message', message, content);
           });
@@ -73,56 +70,16 @@ export class DataService {
     return this;
   };
 
-  public requestRoomInfo = (code: string) => {
-    const data = RoomInfoRequest.encode(
-      RoomInfoRequest.fromJSON({
-        code
-      })
-    ).finish();
+  public request = (requestObject, name: string, request: any) => {
+    const data = requestObject
+      .encode(
+        requestObject.fromJSON({
+          ...request
+        })
+      )
+      .finish();
 
-    this.sendMessage('RoomInfoRequest', data);
-  };
-
-  public preJoinRequest = (room: string) => {
-    const data = PreJoinRequest.encode(
-      PreJoinRequest.fromJSON({
-        room
-      })
-    ).finish();
-
-    this.sendMessage('PreJoinRequest', data);
-  };
-
-  public joinRequest = (room: string, username: string, password?: string) => {
-    const data = JoinRequest.encode(
-      JoinRequest.fromJSON({
-        room,
-        username,
-        password
-      })
-    ).finish();
-
-    this.sendMessage('JoinRequest', data);
-  };
-
-  public createRoomRequest = (
-    players: number,
-    rounds: number,
-    password: string,
-    keywords: Array<string>
-  ) => {
-    let raw: CreateRoomRequest = {
-      players,
-      rounds,
-      password,
-      keywords
-    };
-    if (password === '') {
-      delete raw.password;
-    }
-    const data = CreateRoomRequest.encode(CreateRoomRequest.fromJSON(raw)).finish();
-
-    this.sendMessage('CreateRoomRequest', data);
+    this.sendMessage(name, data);
   };
 
   private getClientId(): number {
@@ -154,27 +111,8 @@ export class DataService {
   ): Promise<PreJoinResponse | JoinResponse | Content | CreateRoomResponse | RoomInfoResponse> =>
     new Promise((resolve, reject) => {
       const buffer = message.payload.value;
-      switch (message.payload.typeUrl as MessageType) {
-        case MessageType.PreJoinResponse:
-          resolve(PreJoinResponse.decode(buffer));
-          break;
-        case MessageType.JoinResponse:
-          resolve(JoinResponse.decode(buffer));
-          break;
-        case MessageType.Content:
-          resolve(Content.decode(buffer));
-          break;
-        case MessageType.CreateRoomResponse:
-          resolve(CreateRoomResponse.decode(buffer));
-          break;
-        case MessageType.RoomInfoResponse:
-          resolve(RoomInfoResponse.decode(buffer));
-          break;
-
-        default:
-          reject('Unknown Type: ' + message.payload.typeUrl);
-          break;
-      }
+      const typeUrl = message.payload.typeUrl;
+      resolve(communication[typeUrl].decode(buffer));
     });
 
   private sendMessage = (typeUrl: string, value: Uint8Array) => {
@@ -189,7 +127,7 @@ export class DataService {
     ).finish();
 
     if (this.socket === undefined) {
-      this.messageQueue.push({b: bits});
+      this.messageQueue.push({ b: bits });
     } else {
       if (this.socket.readyState <= 1) {
         this.socket.send(bits);

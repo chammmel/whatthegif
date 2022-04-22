@@ -27,8 +27,5 @@ export default {
   connect: () => {
     dataService.connectToServer(addMessage);
   },
-  requestRoomInfo: dataService.requestRoomInfo,
-  preJoinRequest: dataService.preJoinRequest,
-  joinRequest: dataService.joinRequest,
-  createRoomRequest: dataService.createRoomRequest
+  request: dataService.request
 };
