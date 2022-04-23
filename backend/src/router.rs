@@ -14,6 +14,7 @@ pub async fn data_event_handler(
     data_result: DataResultRequest,
     device_id: &str,
     store: &DataStore,
+    users: &Users,
     origin: &str,
 ) -> Option<Vec<u8>> {
     log::debug!("{data_result:?}, device_id: {device_id}, origin: {origin}");
@@ -30,7 +31,7 @@ pub async fn data_event_handler(
 pub async fn client_msg(id: &str, msg: Message, users: &Users, store: &DataStore, org: &Org) {
     match data_converter::data_parser(msg.into_bytes(), org.as_str()) {
         Ok(data) => {
-            let result = data_event_handler(data, id, store, org.as_str()).await;
+            let result = data_event_handler(data, id, store, users, org.as_str()).await;
 
             match result {
                 Some(result) => {

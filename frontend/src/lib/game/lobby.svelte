@@ -1,13 +1,13 @@
 <script lang="ts">
   import Logo from '$lib/header/Logo.svelte';
-  import backend from '$lib/stores/backend';
-  import { onMount, onDestroy } from 'svelte';
-  import { MessageType } from '$lib/service/data.service';
+  import { onMount } from 'svelte';
+  import { room } from '$lib/stores/room';
   import {
     RoomInfoError,
     RoomInfoRequest,
     type RoomInfoResponse
   } from '$lib/generated/protocol/communication';
+  import backend from '$lib/stores/backend';
 
   export let id: string;
   let roomInfoResponse: RoomInfoResponse = {
@@ -18,16 +18,6 @@
     keywords: [],
     error: RoomInfoError.UNRECOGNIZED
   };
-
-  const unsubscribe = backend.subscribe((newMessage) => {
-    if (newMessage) {
-      if (newMessage.messageType === MessageType.RoomInfoResponse) {
-        roomInfoResponse = newMessage.data as RoomInfoResponse;
-      }
-    }
-  });
-
-  onDestroy(unsubscribe);
 
   onMount(() => {
     backend.request(RoomInfoRequest, 'RoomInfoRequest', { code: id } as RoomInfoRequest);
@@ -51,7 +41,7 @@
       <div class="header">
         <h2>Lobby</h2>
         <h2>
-          #{id}
+          #{$room.code}
           <svg
             on:click={copyId}
             width="17"
@@ -78,11 +68,11 @@
 
       <div class="item">
         <h3>Rounds</h3>
-        <h3>{roomInfoResponse.rounds}</h3>
+        <h3>{$room.rounds}</h3>
       </div>
       <div class="item">
         <h3>Max players</h3>
-        <h3>{roomInfoResponse.players}</h3>
+        <h3>{$room.playerLimit}</h3>
       </div>
 
       <div class="header">
@@ -93,17 +83,16 @@
     <div class="box">
       <div class="header">
         <h2>Players</h2>
-        <h2>{roomInfoResponse.playerCount}/{roomInfoResponse.players}</h2>
+        <h2>{$room.playerCount}/{$room.playerLimit}</h2>
       </div>
 
       <div class="players">
-        <div class="player">
-          <img
-            src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.dailymoss.com%2Fwp-content%2Fuploads%2F2019%2F08%2Ffunny-profile-pic19-768x576.jpg&f=1&nofb=1"
-            alt="PB"
-          />
-          <span>CokeJoke</span>
-        </div>
+        {#each $room.users as user}
+          <div class="player">
+            <img src={user.imageUrl} alt="PB" />
+            <span>{user.name}</span>
+          </div>
+        {/each}
       </div>
     </div>
   </div>

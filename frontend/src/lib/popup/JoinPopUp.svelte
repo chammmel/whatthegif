@@ -2,19 +2,19 @@
   import Input from '$lib/input/Input.svelte';
   import PopUp from '$lib/popup/PopUp.svelte';
   import GifButton from '$lib/input/GifButton.svelte';
-  import UserStore from '$lib/stores/user';
-  import popup from '$lib/stores/popup';
+  import { user as UserStore } from '$lib/stores/user';
+  import { closePopUp } from '$lib/stores/popup';
 </script>
 
 <script lang="ts">
   let username = '';
 
   function submit() {
-    UserStore.user.update((u) => ({
+    UserStore.update((u) => ({
       ...u,
       name: username
     }));
-    popup.closePopUp();
+    closePopUp();
   }
 </script>
 

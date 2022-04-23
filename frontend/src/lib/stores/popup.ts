@@ -5,11 +5,6 @@ export enum PopUpType {
   NONE = 2
 }
 
-const currentPopUp = writable<PopUpType>(PopUpType.NONE);
+export const currentPopUp = writable<PopUpType>(PopUpType.NONE);
 
-export default {
-  currentPopUp,
-  closePopUp: () => {
-    currentPopUp.set(PopUpType.NONE);
-  }
-};
+export const closePopUp = () => currentPopUp.set(PopUpType.NONE);

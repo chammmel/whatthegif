@@ -10,23 +10,22 @@
 <script lang="ts">
   import Game from '$lib/game/game.svelte';
   import Lobby from '$lib/game/lobby.svelte';
-  import userStore from '$lib/stores/user';
+  import { user as UserStore } from '$lib/stores/user';
   import backend from '$lib/stores/backend';
   import { PreJoinRequest } from '$lib/generated/protocol/communication';
   import { onDestroy } from 'svelte';
-  import popup, { PopUpType } from '$lib/stores/popup';
-  import { get } from 'svelte/store';
+  import { currentPopUp as PopupStore, PopUpType } from '$lib/stores/popup';
 
   export let id: string;
   let isAuthenticated: boolean;
   let lobby: boolean = true;
 
-  const unsubscribeUser = userStore.user.subscribe((u) => {
+  const unsubscribeUser = UserStore.subscribe((u) => {
     if (!u?.isAuthenticated) {
       if (u?.name) {
         backend.request(PreJoinRequest, 'PreJoinRequest', { room: id } as PreJoinRequest);
       } else {
-        popup.currentPopUp.set(PopUpType.JOIN);
+        PopupStore.set(PopUpType.JOIN);
       }
     }
     isAuthenticated = u?.isAuthenticated;

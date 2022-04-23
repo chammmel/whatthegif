@@ -44,7 +44,7 @@ pub async fn room_info_request(
     store: &DataStore,
     origin: &str,
 ) -> Option<Vec<u8>> {
-    let store = store.lock().await;
+    let mut store = store.lock().await;
     let room = store.get_room(data.get_code());
     let mut response = RoomInfoResponse::new();
 

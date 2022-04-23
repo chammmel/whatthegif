@@ -10,8 +10,8 @@ pub struct Store {
 }
 
 impl Store {
-    pub fn get_room(&self, id: &str) -> Option<&Room> {
-        self.rooms.get(id)
+    pub fn get_room(&mut self, id: &str) -> Option<&mut Room> {
+        self.rooms.get_mut(id)
     }
 }
 
@@ -64,8 +64,8 @@ pub type Users = Arc<Mutex<HashMap<String, User>>>;
 
 #[derive(Debug, Clone)]
 pub struct User {
-    pub user_id: usize,
-    pub room: Option<usize>,
+    pub user_id: String,
+    pub room: Option<String>,
     pub name: Option<String>,
     pub image_url: Option<String>,
     pub sender: Option<mpsc::UnboundedSender<Message>>,

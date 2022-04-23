@@ -2,7 +2,7 @@ use protobuf::RepeatedField;
 
 use crate::{
     data_converter,
-    data_store::DataStore,
+    data_store::{DataStore, User},
     generated::{
         self,
         communication::{JoinError, JoinRequest, JoinResponse, PreJoinRequest, PreJoinResponse},
@@ -18,7 +18,7 @@ pub async fn pre_join_request(
     log::debug!("{device_id}: {data:?}");
 
     let mut reponse = PreJoinResponse::new();
-    let store = store.lock().await;
+    let mut store = store.lock().await;
 
     let room_id = &data.get_room();
     let room = store.get_room(room_id);
@@ -39,6 +39,7 @@ pub async fn pre_join_request(
         }
         None => {
             log::info!("Unable to find room: {room_id}");
+            reponse.set_code(String::from(""));
             reponse.set_error(JoinError::NOT_FOUND);
         }
     };
@@ -59,9 +60,9 @@ pub async fn join_request(
 
     let mut response = JoinResponse::new();
 
-    let store = store.lock().await;
+    let mut store = store.lock().await;
 
-    let room = store.get_room(data.get_room());
+    let mut room = store.get_room(data.get_room());
     match room {
         Some(room) => {
             if room.is_full() {
@@ -79,6 +80,14 @@ pub async fn join_request(
             }
 
             if response.get_error() == JoinError::FINE {
+                room.users.push(User {
+                    user_id: device_id.to_string(),
+                    room: Some(data.get_room().to_string()),
+                    name: Some(data.get_username().to_string()),
+                    image_url: None,
+                    sender: None,
+                });
+
                 let users = room
                     .users
                     .clone()
@@ -95,6 +104,7 @@ pub async fn join_request(
                         user
                     })
                     .collect();
+                room.size = room.size + 1;
                 response.set_user(RepeatedField::from_vec(users))
             }
         }

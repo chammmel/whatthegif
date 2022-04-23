@@ -1,5 +1,6 @@
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
 
+
 use futures::SinkExt;
 use futures::StreamExt;
 
@@ -172,7 +173,7 @@ async fn register_client(id: String, user_id: usize, clients: Users) {
     clients.lock().await.insert(
         id,
         User {
-            user_id,
+            user_id: user_id.to_string(),
             room: None,
             name: None,
             image_url: None,

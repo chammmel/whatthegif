@@ -6,6 +6,4 @@ export interface User {
   isAuthenticated: boolean;
 }
 
-const user = writable<User>();
-
-export default { user };
+export const user = writable<User>();
