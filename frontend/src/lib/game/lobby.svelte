@@ -10,14 +10,6 @@
   import backend from '$lib/stores/backend';
 
   export let id: string;
-  let roomInfoResponse: RoomInfoResponse = {
-    code: '123',
-    playerCount: -1,
-    players: -1,
-    rounds: 0,
-    keywords: [],
-    error: RoomInfoError.UNRECOGNIZED
-  };
 
   onMount(() => {
     backend.request(RoomInfoRequest, 'RoomInfoRequest', { code: id } as RoomInfoRequest);
