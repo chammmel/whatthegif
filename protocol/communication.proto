@@ -23,9 +23,10 @@ message JoinRequest {
 }
 
 message JoinResponse {
-  optional JoinError error = 1;
+  required GameState game_state = 1;
   repeated User user = 2;
   optional Content content = 3;
+  optional JoinError error = 4;
 }
 
 message User {
@@ -85,4 +86,9 @@ message RoomInfoResponse {
 enum RoomInfoError {
   ROOM_NOT_FOUND = 0;
   OK = 1;
+}
+
+enum GameState {
+  LOBBY = 0;
+  RUNNGING = 1;
 }

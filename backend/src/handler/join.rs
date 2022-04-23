@@ -62,7 +62,7 @@ pub async fn join_request(
 
     let mut store = store.lock().await;
 
-    let mut room = store.get_room(data.get_room());
+    let room = store.get_room(data.get_room());
     match room {
         Some(room) => {
             if room.is_full() {
@@ -104,11 +104,20 @@ pub async fn join_request(
                         user
                     })
                     .collect();
-                room.size = room.size + 1;
-                response.set_user(RepeatedField::from_vec(users))
+                room.size += 1;
+                response.set_user(RepeatedField::from_vec(users));
+                response.set_game_state(match room.status {
+                    crate::data_store::RoomState::Lobby => {
+                        generated::communication::GameState::LOBBY
+                    }
+                    crate::data_store::RoomState::Running => {
+                        generated::communication::GameState::RUNNGING
+                    }
+                });
             }
         }
         None => {
+            response.set_game_state(generated::communication::GameState::LOBBY);
             response.set_error(JoinError::NOT_FOUND);
         }
     }

@@ -1,4 +1,4 @@
-import { RoomInfoRequest } from '$lib/generated/protocol/communication';
+import { RoomInfoRequest, GameState } from '$lib/generated/protocol/communication';
 import { writable } from 'svelte/store';
 import backend from './backend';
 import type { User } from './user';
@@ -10,6 +10,7 @@ export interface Room {
   rounds: number;
   keywords: Array<string>;
   users: Array<User>;
+  gameState: GameState;
 }
 
 export const room = writable<Room>({

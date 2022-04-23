@@ -72,6 +72,7 @@ function handleJoinResponse(response: JoinResponse) {
       }));
       RoomStore.update((r) => ({
         ...r,
+        gameState: response.gameState,
         users: response.user.map((u) => ({
           name: u.name,
           imageUrl: u.imageUrl,

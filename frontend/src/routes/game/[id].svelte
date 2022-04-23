@@ -12,14 +12,13 @@
   import Lobby from '$lib/game/lobby.svelte';
   import { user as UserStore } from '$lib/stores/user';
   import backend from '$lib/stores/backend';
-  import { PreJoinRequest } from '$lib/generated/protocol/communication';
+  import { GameState, PreJoinRequest } from '$lib/generated/protocol/communication';
   import { onDestroy } from 'svelte';
   import { currentPopUp as PopupStore, PopUpType } from '$lib/stores/popup';
+  import { room } from '$lib/stores/room';
 
   export let id: string;
   let isAuthenticated: boolean;
-  let lobby: boolean = true;
-
   const unsubscribeUser = UserStore.subscribe((u) => {
     if (!u?.isAuthenticated) {
       if (u?.name) {
@@ -41,7 +40,7 @@
 </svelte:head>
 
 {#if isAuthenticated}
-  {#if lobby}
+  {#if $room.gameState === GameState.LOBBY}
     <Lobby {id} />
   {:else}
     <Game {id} />

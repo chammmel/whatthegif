@@ -4,7 +4,9 @@ use random_string::generate;
 use crate::{
     data_converter,
     data_store::{DataStore, Room},
-    generated::communication::{CreateRoomRequest, RoomInfoRequest, RoomInfoResponse, CreateRoomResponse},
+    generated::communication::{
+        CreateRoomRequest, CreateRoomResponse, RoomInfoRequest, RoomInfoResponse,
+    },
 };
 
 pub async fn create_room_request(

@@ -1,4 +1,4 @@
-use std::{sync::Arc, collections::HashMap};
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{mpsc, Mutex};
 
 use clap::Parser;
@@ -10,13 +10,14 @@ mod configuration;
 mod data_converter;
 mod data_store;
 mod generated;
-mod pubsub;
-mod web_server;
-mod router;
 mod handler;
+mod pubsub;
+mod router;
+mod web_server;
 
 extern crate pretty_env_logger;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() {
@@ -24,7 +25,7 @@ async fn main() {
     let args = Args::parse();
 
     let data_store = Store {
-      rooms: HashMap::new()
+        rooms: HashMap::new(),
     };
     let data_store = Mutex::new(data_store);
     let data_store = Arc::new(data_store);

@@ -1,13 +1,15 @@
 use protobuf::well_known_types::Any;
 
-use crate::generated::communication::{JoinRequest, Message, PreJoinRequest, CreateRoomRequest, RoomInfoRequest};
+use crate::generated::communication::{
+    CreateRoomRequest, JoinRequest, Message, PreJoinRequest, RoomInfoRequest,
+};
 
 #[derive(Debug)]
 pub enum DataResultRequest {
     Join(JoinRequest),
     PreJoin(PreJoinRequest),
     CreateRoom(CreateRoomRequest),
-    RoomInfo(RoomInfoRequest)
+    RoomInfo(RoomInfoRequest),
 }
 
 fn get_message(bytes: Vec<u8>) -> Option<Message> {

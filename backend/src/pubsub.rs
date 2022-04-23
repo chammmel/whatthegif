@@ -1,9 +1,6 @@
 use redis::Client;
 
-use crate::{
-    data_store::DataStore,
-    Args,
-};
+use crate::{data_store::DataStore, Args};
 
 pub fn initialize(args: &Args, data_store: &DataStore) {
     match args.get_redis() {
