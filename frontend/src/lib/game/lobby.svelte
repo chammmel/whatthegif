@@ -8,6 +8,7 @@
     type RoomInfoResponse
   } from '$lib/generated/protocol/communication';
   import backend from '$lib/stores/backend';
+  import GifButton from '$lib/input/GifButton.svelte';
 
   export let id: string;
 
@@ -86,6 +87,7 @@
           </div>
         {/each}
       </div>
+      <GifButton width={'100%'} background="var(--green-color)">Start</GifButton>
     </div>
   </div>
 </section>
@@ -186,7 +188,7 @@
   .players {
     margin-top: 15px;
     overflow-y: auto;
-    height: 550px;
+    height: 490px;
   }
   .player {
     display: flex;
