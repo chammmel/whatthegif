@@ -30,13 +30,14 @@ jobs:
       - name: Generate protocol files
         run: ./generate.sh
 
-      #- name: Build Frontend
-        #run: npm run build
-        #working-directory: frontend
+      - name: Build Frontend
+        run: npm run build
+        working-directory: frontend
 
       - name: Build Backend
         run: cargo build
         working-directory: backend
+
       - name: Run Backend tests
         run: cargo test
         working-directory: backend
